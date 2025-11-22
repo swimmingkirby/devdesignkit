@@ -15,7 +15,7 @@ export function ActionBar({ selectedTheme, onThemeChange }: ActionBarProps) {
     return (
         <div className="h-12 flex items-center border-b border-[#444] bg-[#2C2C2C] text-white shrink-0">
             {/* Left side - Theme Selector (aligned with sidebar width) */}
-            <div className="w-[300px] flex items-center px-6 border-r border-[#444] shrink-0 h-full">
+            <div className="w-[480px] max-w-[480px] min-w-[480px] flex items-center px-6 border-r border-[#444] shrink-0 h-full">
                 <Select value={selectedTheme} onValueChange={onThemeChange}>
                     <SelectTrigger className="h-8 w-full bg-[#1E1E1E] border-[#444] text-white hover:bg-[#2C2C2C]">
                         <SelectValue placeholder="Select a theme" />

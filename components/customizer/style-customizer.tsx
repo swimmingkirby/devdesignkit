@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Separator } from "@/components/ui/separator"
 import { ColorPicker } from "@/components/ui/color-picker"
+import { Switch } from "@/components/ui/switch"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { CustomizerHeader } from "./customizer-header"
 import { ActionBar } from "./action-bar"
 import { LayoutDashboard, TrendingUp, BarChart3, FolderKanban, Users, Database, FileText, HelpCircle, Settings, Search, ChevronUp, Plus, Pencil, Home, ChevronRight } from "lucide-react"
@@ -29,10 +31,31 @@ const FONT_OPTIONS = [
   { value: "Raleway", label: "Raleway" },
 ]
 
-export function StyleCustomizer() {
+interface StyleCustomizerProps {
+  initialTheme?: ThemeKey | null
+}
+
+export function StyleCustomizer({ initialTheme }: StyleCustomizerProps = {}) {
   const { theme, updateTheme } = useTheme()
-  const [selectedTheme, setSelectedTheme] = React.useState<ThemeKey>("minimal")
+  const [selectedTheme, setSelectedTheme] = React.useState<ThemeKey>(initialTheme || "minimal")
   const [barHeights, setBarHeights] = React.useState<number[]>([])
+  
+  // UX Settings state (local only, not connected to theme tokens yet)
+  const [uxSettings, setUxSettings] = React.useState({
+    touchTarget: false,
+    interactivePadding: "medium" as "small" | "medium" | "large",
+    enforceContrast: false,
+    focusRings: true,
+    reducedMotion: false,
+    density: "cozy" as "compact" | "cozy" | "spacious",
+    formSpacing: "default" as "tight" | "default" | "wide",
+    strongErrors: true,
+    strongHover: true,
+    autoValidationMessages: false,
+    lineHeight: "normal" as "normal" | "relaxed" | "loose",
+    bodyFontSize: "md" as "small" | "medium" | "large",
+    headingsEnabled: true,
+  })
 
   // Stub function for future backend extraction integration
   function applyExtractedTheme(tokens: ThemeTokens) {
@@ -70,14 +93,38 @@ export function StyleCustomizer() {
     })
   }
 
-  // Initialize theme on mount
+  // Initialize theme on mount or when initialTheme changes
   React.useEffect(() => {
-    const initialTheme = presetThemes[selectedTheme]
-    if (initialTheme) {
-      updateTheme(initialTheme)
+    if (initialTheme && presetThemes[initialTheme]) {
+      // Theme was passed via URL param - set it
+      setSelectedTheme(initialTheme)
+      const initialThemeTokens = presetThemes[initialTheme]
+      updateTheme(initialThemeTokens)
+    } else {
+      // No theme param - try to detect which preset matches current theme
+      const matchingPreset = Object.entries(presetThemes).find(
+        ([key, presetTheme]) => {
+          return (
+            presetTheme.colors.primary === theme.colors.primary &&
+            presetTheme.colors.background === theme.colors.background &&
+            presetTheme.radius === theme.radius
+          )
+        }
+      )
+      
+      if (matchingPreset) {
+        // Found matching preset - sync the dropdown
+        setSelectedTheme(matchingPreset[0] as ThemeKey)
+      } else {
+        // No match - initialize with default
+        const defaultTheme = presetThemes[selectedTheme]
+        if (defaultTheme) {
+          updateTheme(defaultTheme)
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Only run on mount - updateTheme is stable from context
+  }, [initialTheme]) // Run when initialTheme changes
 
   // Generate bar heights only on client to avoid hydration mismatch
   React.useEffect(() => {
@@ -98,15 +145,16 @@ export function StyleCustomizer() {
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Customization Panel */}
-        <aside className="w-[300px] flex flex-col border-r border-[#444] bg-[#2C2C2C] shrink-0">
+        <aside className="w-[480px] max-w-[480px] min-w-[480px] flex flex-col border-r border-[#444] bg-[#2C2C2C] shrink-0 overflow-hidden">
           {/* Scrollable Sidebar Content */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="p-4">
-              <Tabs defaultValue="colors" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-[#1E1E1E] text-gray-400">
-                  <TabsTrigger value="colors" className="data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white">Colors</TabsTrigger>
-                  <TabsTrigger value="typography" className="data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white">Type</TabsTrigger>
-                  <TabsTrigger value="other" className="data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white">Other</TabsTrigger>
+          <div className="flex-1 overflow-y-auto custom-scrollbar min-w-0 max-w-full">
+            <div className="p-4 w-full min-w-0 max-w-full box-border">
+              <Tabs defaultValue="colors" className="w-full min-w-0 max-w-full">
+                <TabsList className="flex w-full max-w-full bg-[#1E1E1E] text-gray-400 min-w-0">
+                  <TabsTrigger value="colors" className="flex-1 min-w-0 data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white text-xs">Colors</TabsTrigger>
+                  <TabsTrigger value="typography" className="flex-1 min-w-0 data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white text-xs">Type</TabsTrigger>
+                  <TabsTrigger value="other" className="flex-1 min-w-0 data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white text-xs">Other</TabsTrigger>
+                  <TabsTrigger value="ux-principles" className="flex-1 min-w-0 data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white text-xs">UX Principles</TabsTrigger>
                 </TabsList>
 
                 {/* Colors Tab */}
@@ -404,6 +452,248 @@ export function StyleCustomizer() {
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
+                </TabsContent>
+
+                {/* UX Principles Tab */}
+                <TabsContent value="ux-principles" className="mt-4 space-y-6 w-full min-w-0 max-w-full box-border">
+                  {/* Interaction & Touch Targets */}
+                  <div className="space-y-4 w-full min-w-0">
+                    <h3 className="text-base font-semibold text-white">Interaction & Touch Targets</h3>
+                    <div className="space-y-4 w-full min-w-0">
+                      <div className="flex items-start justify-between gap-4 w-full min-w-0">
+                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                          <Label className="text-gray-300 text-sm break-words">Enforce Minimum Touch Target (44px)</Label>
+                          <p className="text-xs text-gray-500 break-words">Ensures all clickable elements meet accessibility size guidelines.</p>
+                        </div>
+                        <Switch
+                          checked={uxSettings.touchTarget}
+                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, touchTarget: checked })}
+                          className="shrink-0 flex-shrink-0 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-[#444]"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-gray-300">Increase Interactive Padding</Label>
+                        <p className="text-xs text-gray-500 mb-2">Adds horizontal & vertical padding to interactive components.</p>
+                        <RadioGroup
+                          value={uxSettings.interactivePadding}
+                          onValueChange={(value) => setUxSettings({ ...uxSettings, interactivePadding: value as "small" | "medium" | "large" })}
+                          className="flex flex-col gap-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="small" id="padding-small" className="border-[#555] data-[state=checked]:border-blue-600" />
+                            <Label htmlFor="padding-small" className="text-sm text-gray-300 cursor-pointer">Small</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="medium" id="padding-medium" className="border-[#555] data-[state=checked]:border-blue-600" />
+                            <Label htmlFor="padding-medium" className="text-sm text-gray-300 cursor-pointer">Medium</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="large" id="padding-large" className="border-[#555] data-[state=checked]:border-blue-600" />
+                            <Label htmlFor="padding-large" className="text-sm text-gray-300 cursor-pointer">Large</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator className="bg-[#444]" />
+
+                  {/* Accessibility */}
+                  <div className="space-y-4 w-full min-w-0">
+                    <h3 className="text-base font-semibold text-white">Accessibility</h3>
+                    <div className="space-y-4 w-full min-w-0">
+                      <div className="flex items-start justify-between gap-4 w-full min-w-0">
+                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                          <Label className="text-gray-300 text-sm break-words">Enforce WCAG AA Contrast</Label>
+                          <p className="text-xs text-gray-500 break-words">Automatically adjusts color contrast to meet AA standards.</p>
+                        </div>
+                        <Switch
+                          checked={uxSettings.enforceContrast}
+                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, enforceContrast: checked })}
+                          className="shrink-0 flex-shrink-0 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-[#444]"
+                        />
+                      </div>
+                      <div className="flex items-start justify-between gap-4 w-full min-w-0">
+                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                          <Label className="text-gray-300 text-sm break-words">Enable Visible Focus Rings</Label>
+                          <p className="text-xs text-gray-500 break-words">Improves keyboard navigation visibility.</p>
+                        </div>
+                        <Switch
+                          checked={uxSettings.focusRings}
+                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, focusRings: checked })}
+                          className="shrink-0 flex-shrink-0 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-[#444]"
+                        />
+                      </div>
+                      <div className="flex items-start justify-between gap-4 w-full min-w-0">
+                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                          <Label className="text-gray-300 text-sm break-words">Hide Motion / Reduce Animations</Label>
+                          <p className="text-xs text-gray-500 break-words">Replaces motion-heavy transitions with subtle fades.</p>
+                        </div>
+                        <Switch
+                          checked={uxSettings.reducedMotion}
+                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, reducedMotion: checked })}
+                          className="shrink-0 flex-shrink-0 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-[#444]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator className="bg-[#444]" />
+
+                  {/* Density & Spacing */}
+                  <div className="space-y-4">
+                    <h3 className="text-base font-semibold text-white">Density & Spacing</h3>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-gray-300">Layout Density</Label>
+                        <p className="text-xs text-gray-500 mb-2">Controls layout spacing for content-heavy or airy designs.</p>
+                        <RadioGroup
+                          value={uxSettings.density}
+                          onValueChange={(value) => setUxSettings({ ...uxSettings, density: value as "compact" | "cozy" | "spacious" })}
+                          className="flex flex-col gap-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="compact" id="density-compact" className="border-[#555] data-[state=checked]:border-blue-600" />
+                            <Label htmlFor="density-compact" className="text-sm text-gray-300 cursor-pointer">Compact</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="cozy" id="density-cozy" className="border-[#555] data-[state=checked]:border-blue-600" />
+                            <Label htmlFor="density-cozy" className="text-sm text-gray-300 cursor-pointer">Cozy</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="spacious" id="density-spacious" className="border-[#555] data-[state=checked]:border-blue-600" />
+                            <Label htmlFor="density-spacious" className="text-sm text-gray-300 cursor-pointer">Spacious</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-gray-300">Form Field Spacing</Label>
+                        <p className="text-xs text-gray-500 mb-2">Adjust vertical spacing between form inputs.</p>
+                        <RadioGroup
+                          value={uxSettings.formSpacing}
+                          onValueChange={(value) => setUxSettings({ ...uxSettings, formSpacing: value as "tight" | "default" | "wide" })}
+                          className="flex flex-col gap-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="tight" id="form-tight" className="border-[#555] data-[state=checked]:border-blue-600" />
+                            <Label htmlFor="form-tight" className="text-sm text-gray-300 cursor-pointer">Tight</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="default" id="form-default" className="border-[#555] data-[state=checked]:border-blue-600" />
+                            <Label htmlFor="form-default" className="text-sm text-gray-300 cursor-pointer">Default</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="wide" id="form-wide" className="border-[#555] data-[state=checked]:border-blue-600" />
+                            <Label htmlFor="form-wide" className="text-sm text-gray-300 cursor-pointer">Wide</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator className="bg-[#444]" />
+
+                  {/* Feedback & States */}
+                  <div className="space-y-4 w-full min-w-0">
+                    <h3 className="text-base font-semibold text-white">Feedback & States</h3>
+                    <div className="space-y-4 w-full min-w-0">
+                      <div className="flex items-start justify-between gap-4 w-full min-w-0">
+                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                          <Label className="text-gray-300 text-sm break-words">High-Visibility Error States</Label>
+                          <p className="text-xs text-gray-500 break-words">Use stronger colors + icons for errors.</p>
+                        </div>
+                        <Switch
+                          checked={uxSettings.strongErrors}
+                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, strongErrors: checked })}
+                          className="shrink-0 flex-shrink-0 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-[#444]"
+                        />
+                      </div>
+                      <div className="flex items-start justify-between gap-4 w-full min-w-0">
+                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                          <Label className="text-gray-300 text-sm break-words">Strengthen Hover & Active States</Label>
+                          <p className="text-xs text-gray-500 break-words">Makes interactive elements feel more alive and clear.</p>
+                        </div>
+                        <Switch
+                          checked={uxSettings.strongHover}
+                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, strongHover: checked })}
+                          className="shrink-0 flex-shrink-0 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-[#444]"
+                        />
+                      </div>
+                      <div className="flex items-start justify-between gap-4 w-full min-w-0">
+                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                          <Label className="text-gray-300 text-sm break-words">Show Validation Messages by Default</Label>
+                          <p className="text-xs text-gray-500 break-words">Show form feedback without requiring blur or submit.</p>
+                        </div>
+                        <Switch
+                          checked={uxSettings.autoValidationMessages}
+                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, autoValidationMessages: checked })}
+                          className="shrink-0 flex-shrink-0 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-[#444]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator className="bg-[#444]" />
+
+                  {/* Readability */}
+                  <div className="space-y-4 w-full min-w-0">
+                    <h3 className="text-base font-semibold text-white">Readability</h3>
+                    <div className="space-y-4 w-full min-w-0">
+                      <div className="space-y-2 w-full min-w-0">
+                        <Label className="text-gray-300">Increase Line Height</Label>
+                        <RadioGroup
+                          value={uxSettings.lineHeight}
+                          onValueChange={(value) => setUxSettings({ ...uxSettings, lineHeight: value as "normal" | "relaxed" | "loose" })}
+                          className="flex flex-col gap-2 w-full min-w-0"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="normal" id="line-normal" className="border-[#555] data-[state=checked]:border-blue-600 shrink-0" />
+                            <Label htmlFor="line-normal" className="text-sm text-gray-300 cursor-pointer">Normal</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="relaxed" id="line-relaxed" className="border-[#555] data-[state=checked]:border-blue-600 shrink-0" />
+                            <Label htmlFor="line-relaxed" className="text-sm text-gray-300 cursor-pointer">Relaxed</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="loose" id="line-loose" className="border-[#555] data-[state=checked]:border-blue-600 shrink-0" />
+                            <Label htmlFor="line-loose" className="text-sm text-gray-300 cursor-pointer">Loose</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      <div className="space-y-2 w-full min-w-0">
+                        <Label className="text-gray-300">Use Larger Body Font</Label>
+                        <RadioGroup
+                          value={uxSettings.bodyFontSize}
+                          onValueChange={(value) => setUxSettings({ ...uxSettings, bodyFontSize: value as "small" | "medium" | "large" })}
+                          className="flex flex-col gap-2 w-full min-w-0"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="small" id="font-small" className="border-[#555] data-[state=checked]:border-blue-600 shrink-0" />
+                            <Label htmlFor="font-small" className="text-sm text-gray-300 cursor-pointer">Small</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="medium" id="font-medium" className="border-[#555] data-[state=checked]:border-blue-600 shrink-0" />
+                            <Label htmlFor="font-medium" className="text-sm text-gray-300 cursor-pointer">Medium</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="large" id="font-large" className="border-[#555] data-[state=checked]:border-blue-600 shrink-0" />
+                            <Label htmlFor="font-large" className="text-sm text-gray-300 cursor-pointer">Large</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      <div className="flex items-start justify-between gap-4 w-full min-w-0">
+                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                          <Label className="text-gray-300 text-sm break-words">Enable Consistent Section Headings</Label>
+                          <p className="text-xs text-gray-500 break-words">Improves hierarchy for long pages.</p>
+                        </div>
+                        <Switch
+                          checked={uxSettings.headingsEnabled}
+                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, headingsEnabled: checked })}
+                          className="shrink-0 flex-shrink-0 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-[#444]"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>
