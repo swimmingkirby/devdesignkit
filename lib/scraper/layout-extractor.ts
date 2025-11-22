@@ -204,16 +204,22 @@ function isFooter(node: StyledNode, viewportHeight: number): boolean {
     const tag = node.tag.toLowerCase();
     const classes = node.classes.join(" ").toLowerCase();
     
-    // Check tag and classes
+    // Check tag and classes - primary indicator
     if (tag === "footer" || classes.includes("footer")) {
       return true;
     }
     
-    // Check position (bottom of page)
-    const isNearBottom = node.rect.y > viewportHeight * 0.7;
-    const isWide = node.rect.width > window.innerWidth * 0.8;
+    // Check position (bottom of page) - more lenient
+    const isNearBottom = node.rect.y > viewportHeight * 0.6; // Reduced from 0.7
+    const isWide = node.rect.width > window.innerWidth * 0.7; // Reduced from 0.8
+    const hasTallHeight = node.rect.height > 100; // Must be substantial
     
-    return isNearBottom && isWide;
+    // Look for footer-like patterns
+    const hasFooterPatterns = classes.includes('bottom') || 
+                              classes.includes('copyright') ||
+                              classes.includes('contact');
+    
+    return (isNearBottom && isWide && hasTallHeight) || hasFooterPatterns;
   } catch {
     return false;
   }
@@ -231,13 +237,25 @@ function isHeroSection(node: StyledNode): boolean {
       return true;
     }
     
-    // Structural detection: large section near top
-    const isNearTop = node.rect.y < 300;
-    const isTall = node.rect.height > 400;
-    const isWide = node.rect.width > window.innerWidth * 0.7;
-    const hasFullHeight = classes.includes('min-h-screen') || classes.includes('h-screen');
+    // Check for full-screen classes
+    const hasFullHeight = classes.includes('min-h-screen') || 
+                          classes.includes('h-screen') ||
+                          classes.includes('h-full');
     
-    return (isNearTop && isTall && isWide) || hasFullHeight;
+    if (hasFullHeight) {
+      return true;
+    }
+    
+    // Structural detection: large section near top - more lenient
+    const isNearTop = node.rect.y < 500; // Increased from 300 to account for navbar
+    const isTall = node.rect.height > 300; // Reduced from 400 to be more lenient
+    const isWide = node.rect.width > window.innerWidth * 0.6; // Reduced from 0.7
+    
+    // Also check if it's the first major section after header/nav
+    const hasLargeContent = node.rect.height > 250 && node.rect.width > window.innerWidth * 0.5;
+    const isTopSection = node.rect.y >= 50 && node.rect.y < 400;
+    
+    return (isNearTop && isTall && isWide) || (hasLargeContent && isTopSection);
   } catch {
     return false;
   }
@@ -517,15 +535,97 @@ function detectSections(nodes: StyledNode[], viewportWidth: number, viewportHeig
       }
     });
     
-    // Pass 2: Large containers and main sections
+    // Pass 2: Special sections (navbar, footer) - these may not meet size requirements
     nodes.forEach(node => {
       if (processed.has(node)) return;
       
       try {
-        // Filter for significant sections
+        const tag = node.tag.toLowerCase();
+        const classes = node.classes.join(" ").toLowerCase();
+        
+        // Navbar detection - prioritize even if small
+        if (tag === 'nav' || 
+            tag === 'header' || 
+            classes.includes('nav') || 
+            classes.includes('header') ||
+            node.role === 'navigation' ||
+            isFixedNavbar(node)) {
+          
+          const isAtTop = node.rect.y < 150;
+          const isWideEnough = node.rect.width >= viewportWidth * 0.6;
+          
+          if (isAtTop && isWideEnough) {
+            const isSticky = node.styles.position === 'sticky' || node.styles.position === 'fixed';
+            sections.push({
+              type: tag === 'nav' || node.role === 'navigation' ? "Navbar" : "Header",
+              x: node.rect.x,
+              y: node.rect.y,
+              width: node.rect.width,
+              height: node.rect.height,
+              node,
+              confidence: "high",
+              metadata: { isSticky }
+            });
+            processed.add(node);
+            return;
+          }
+        }
+        
+        // Footer detection - prioritize even if at various positions
+        if (tag === 'footer' || classes.includes('footer')) {
+          const isWideEnough = node.rect.width >= viewportWidth * 0.6;
+          if (isWideEnough) {
+            sections.push({
+              type: "Footer",
+              x: node.rect.x,
+              y: node.rect.y,
+              width: node.rect.width,
+              height: node.rect.height,
+              node,
+              confidence: "high"
+            });
+            processed.add(node);
+            return;
+          }
+        }
+      } catch (error) {
+        // Skip problematic nodes
+      }
+    });
+    
+    // Pass 3: Hero and main sections
+    nodes.forEach(node => {
+      if (processed.has(node)) return;
+      
+      try {
+        // Hero section detection - more lenient
+        if (isHeroSection(node)) {
+          sections.push({
+            type: "Hero",
+            x: node.rect.x,
+            y: node.rect.y,
+            width: node.rect.width,
+            height: node.rect.height,
+            node,
+            confidence: "high"
+          });
+          processed.add(node);
+          return;
+        }
+      } catch (error) {
+        // Skip problematic nodes
+      }
+    });
+    
+    // Pass 4: Large containers and main sections
+    nodes.forEach(node => {
+      if (processed.has(node)) return;
+      
+      try {
+        // Filter for significant sections - lower threshold
         const isSignificantSize = (
-          node.rect.width >= viewportWidth * 0.5 && 
-          node.rect.height >= 100
+          node.rect.width >= viewportWidth * 0.4 && 
+          node.rect.height >= 80
         );
         
         const isStructuralElement = [

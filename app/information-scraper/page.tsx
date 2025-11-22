@@ -5,13 +5,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Download, AlertCircle } from "lucide-react";
+import { Loader2, Download, AlertCircle, Upload, Link as LinkIcon, ZoomIn } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function InformationScraper() {
+  const [inputMode, setInputMode] = useState<"url" | "image">("url");
   const [url, setUrl] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<any>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleScrape = async () => {
     if (!url) return;
@@ -30,6 +46,36 @@ export default function InformationScraper() {
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to scrape URL");
+      }
+
+      const data = await response.json();
+      setResults(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnalyzeImage = async () => {
+    if (!imageFile) return;
+    
+    setLoading(true);
+    setError(null);
+    setResults(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", imageFile);
+
+      const response = await fetch("/api/analyze-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to analyze image");
       }
 
       const data = await response.json();
@@ -65,31 +111,119 @@ export default function InformationScraper() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Scrape URL</CardTitle>
+            <CardTitle>Analyze Website Design</CardTitle>
             <CardDescription>
-              Enter a URL to analyze its UI and generate design artifacts.
+              Extract design tokens, components, and layouts from a URL or screenshot.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <Input 
-                placeholder="https://example.com" 
-                value={url} 
-                onChange={(e) => setUrl(e.target.value)}
-                disabled={loading}
-                className="flex-1"
-              />
-              <Button onClick={handleScrape} disabled={loading || !url}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing
-                  </>
-                ) : (
-                  "Analyze UI"
-                )}
-              </Button>
-            </div>
+            <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as "url" | "image")} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="url">
+                  <LinkIcon className="mr-2 h-4 w-4" />
+                  URL Scraper
+                </TabsTrigger>
+                <TabsTrigger value="image">
+                  <Upload className="mr-2 h-4 w-4" />
+                  Image Analyzer
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="url" className="space-y-4 mt-0">
+                <div className="flex gap-4">
+                  <Input 
+                    placeholder="https://example.com" 
+                    value={url} 
+                    onChange={(e) => setUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleScrape()}
+                    disabled={loading}
+                    className="flex-1"
+                  />
+                  <Button onClick={handleScrape} disabled={loading || !url}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing
+                      </>
+                    ) : (
+                      "Analyze URL"
+                    )}
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Enter a website URL to extract design system via DOM scraping (most accurate).
+                </p>
+              </TabsContent>
+              
+              <TabsContent value="image" className="space-y-4 mt-0">
+                <div className="space-y-4">
+                  <div className="flex gap-4 items-start">
+                    <div className="flex-1">
+                      <Input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={loading}
+                        className="cursor-pointer"
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleAnalyzeImage} 
+                      disabled={loading || !imageFile}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Analyzing
+                        </>
+                      ) : (
+                        "Analyze Image"
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {imagePreview && (
+                    <div className="border rounded-lg p-4 bg-muted/50">
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="text-sm font-medium">Preview:</p>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <ZoomIn className="mr-2 h-4 w-4" />
+                              View Full Size
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-auto">
+                            <DialogHeader>
+                              <DialogTitle>Full Screenshot Preview</DialogTitle>
+                            </DialogHeader>
+                            <div className="mt-4 flex justify-center">
+                              <img 
+                                src={imagePreview} 
+                                alt="Screenshot full view" 
+                                className="w-full h-auto"
+                              />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      <div className="flex justify-center items-center min-h-[200px]">
+                        <img 
+                          src={imagePreview} 
+                          alt="Screenshot preview" 
+                          className="max-w-full h-auto max-h-96 rounded-md border object-contain"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <p className="text-sm text-muted-foreground">
+                    Upload a website screenshot to analyze design via AI vision model (experimental).
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
+            
             {error && (
               <div className="mt-4 p-4 bg-destructive/10 text-destructive rounded-md flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />

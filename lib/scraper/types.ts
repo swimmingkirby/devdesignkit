@@ -49,15 +49,46 @@ export interface Components {
   buttons: ComponentStyle[];
   cards: ComponentStyle[];
   navItems: ComponentStyle[];
+  forms?: ComponentStyle[];
+  feedback?: ComponentStyle[];
+  dataDisplay?: ComponentStyle[];
 }
 
 export interface ComponentStyle {
+  // Core identification
+  component?: string;
+  shadcnVariant?: string;
+  shadcnStructure?: string;
+  
+  // Visual properties
   background: string;
   color: string;
+  border?: string;
   padding: string;
   radius: string;
   shadow: string;
+  
+  // Typography
+  fontSize?: string;
+  fontWeight?: string;
+  
+  // Layout
+  hasHeader?: boolean;
+  hasFooter?: boolean;
+  contentLayout?: string;
+  
+  // Icons
+  usesIcons?: boolean;
+  iconStyle?: string;
+  hasIcon?: boolean;
+  iconPosition?: string;
+  
+  // Metadata
+  description?: string;
   frequency: number;
+  
+  // Fallback for any additional properties
+  [key: string]: any;
 }
 
 export interface Layouts {
