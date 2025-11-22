@@ -2,41 +2,36 @@
 
 import * as React from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { RotateCcw, Share2, Save, Code, Pencil } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { RotateCcw, Share2, Save, Code } from "lucide-react"
+import { themeLabels, ThemeKey } from "@/lib/themes"
 
 interface ActionBarProps {
-    themeName: string
-    isEditingName: boolean
-    onThemeNameChange: (name: string) => void
-    onEditingChange: (editing: boolean) => void
+    selectedTheme: ThemeKey
+    onThemeChange: (theme: ThemeKey) => void
 }
 
-export function ActionBar({ themeName, isEditingName, onThemeNameChange, onEditingChange }: ActionBarProps) {
+export function ActionBar({ selectedTheme, onThemeChange }: ActionBarProps) {
     return (
         <div className="h-12 flex items-center border-b border-[#444] bg-[#2C2C2C] text-white shrink-0">
-            {/* Left side - Theme Name (aligned with sidebar width) */}
+            {/* Left side - Theme Selector (aligned with sidebar width) */}
             <div className="w-[300px] flex items-center px-6 border-r border-[#444] shrink-0 h-full">
-                <div className="flex items-center gap-2 group">
-                    {isEditingName ? (
-                        <Input
-                            value={themeName}
-                            onChange={(e) => onThemeNameChange(e.target.value)}
-                            onBlur={() => onEditingChange(false)}
-                            onKeyDown={(e) => e.key === 'Enter' && onEditingChange(false)}
-                            autoFocus
-                            className="h-8 w-full bg-[#1E1E1E] border-[#444] text-white"
-                        />
-                    ) : (
-                        <button
-                            onClick={() => onEditingChange(true)}
-                            className="flex items-center gap-2 text-sm font-medium hover:text-gray-300 transition-colors"
-                        >
-                            {themeName}
-                            <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
-                        </button>
-                    )}
-                </div>
+                <Select value={selectedTheme} onValueChange={onThemeChange}>
+                    <SelectTrigger className="h-8 w-full bg-[#1E1E1E] border-[#444] text-white hover:bg-[#2C2C2C]">
+                        <SelectValue placeholder="Select a theme" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1E1E1E] border-[#444]">
+                        {Object.entries(themeLabels).map(([key, label]) => (
+                            <SelectItem 
+                                key={key} 
+                                value={key}
+                                className="text-white hover:bg-[#3C3C3C] focus:bg-[#3C3C3C]"
+                            >
+                                {label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
 
             {/* Right side - Action Buttons */}

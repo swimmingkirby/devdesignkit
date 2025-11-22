@@ -15,6 +15,8 @@ import { ColorPicker } from "@/components/ui/color-picker"
 import { CustomizerHeader } from "./customizer-header"
 import { ActionBar } from "./action-bar"
 import { LayoutDashboard, TrendingUp, BarChart3, FolderKanban, Users, Database, FileText, HelpCircle, Settings, Search, ChevronUp, Plus, Pencil, Home, ChevronRight } from "lucide-react"
+import { presetThemes, ThemeKey } from "@/lib/themes"
+import { ThemeTokens } from "@/lib/types/theme"
 
 const FONT_OPTIONS = [
   { value: "Inter", label: "Inter" },
@@ -29,8 +31,23 @@ const FONT_OPTIONS = [
 
 export function StyleCustomizer() {
   const { theme, updateTheme } = useTheme()
-  const [themeName, setThemeName] = React.useState("My Custom Theme")
-  const [isEditingName, setIsEditingName] = React.useState(false)
+  const [selectedTheme, setSelectedTheme] = React.useState<ThemeKey>("minimal")
+  const [barHeights, setBarHeights] = React.useState<number[]>([])
+
+  // Stub function for future backend extraction integration
+  function applyExtractedTheme(tokens: ThemeTokens) {
+    // TODO: this will be used by backend extraction later
+    updateTheme(tokens)
+  }
+
+  // Handle theme selection from dropdown
+  const handleThemeChange = React.useCallback((themeKey: ThemeKey) => {
+    setSelectedTheme(themeKey)
+    const selectedThemeTokens = presetThemes[themeKey]
+    if (selectedThemeTokens) {
+      updateTheme(selectedThemeTokens)
+    }
+  }, [updateTheme])
 
   const handleColorChange = (key: keyof typeof theme.colors, value: string) => {
     updateTheme({
@@ -53,17 +70,29 @@ export function StyleCustomizer() {
     })
   }
 
+  // Initialize theme on mount
+  React.useEffect(() => {
+    const initialTheme = presetThemes[selectedTheme]
+    if (initialTheme) {
+      updateTheme(initialTheme)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run on mount - updateTheme is stable from context
+
+  // Generate bar heights only on client to avoid hydration mismatch
+  React.useEffect(() => {
+    setBarHeights(Array.from({ length: 12 }, () => Math.random() * 60 + 20))
+  }, [])
+
   return (
     <div className="flex flex-col h-screen bg-[#2C2C2C] text-white overflow-hidden">
       {/* Top Bar - Logo and Auth */}
       <CustomizerHeader />
 
-      {/* Second Bar - Theme Name and Actions */}
+      {/* Second Bar - Theme Selector and Actions */}
       <ActionBar
-        themeName={themeName}
-        isEditingName={isEditingName}
-        onThemeNameChange={setThemeName}
-        onEditingChange={setIsEditingName}
+        selectedTheme={selectedTheme}
+        onThemeChange={handleThemeChange}
       />
 
       {/* Main Content Area */}
@@ -638,7 +667,7 @@ export function StyleCustomizer() {
                     {/* Background */}
                     <div className="space-y-2">
                       <div
-                        className="h-24 rounded-lg border"
+                        className="w-full aspect-square rounded-lg border"
                         style={{
                           backgroundColor: theme.colors.background,
                           borderColor: theme.colors.border
@@ -653,7 +682,7 @@ export function StyleCustomizer() {
                     {/* Foreground */}
                     <div className="space-y-2">
                       <div
-                        className="h-24 rounded-lg border"
+                        className="w-full aspect-square rounded-lg border"
                         style={{
                           backgroundColor: theme.colors.foreground,
                           borderColor: theme.colors.border
@@ -668,7 +697,7 @@ export function StyleCustomizer() {
                     {/* Primary */}
                     <div className="space-y-2">
                       <div
-                        className="h-24 rounded-lg border"
+                        className="w-full aspect-square rounded-lg border"
                         style={{
                           backgroundColor: theme.colors.primary,
                           borderColor: theme.colors.border
@@ -684,7 +713,7 @@ export function StyleCustomizer() {
                     {theme.colors.primaryForeground && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border"
+                          className="w-full aspect-square rounded-lg border"
                           style={{
                             backgroundColor: theme.colors.primaryForeground,
                             borderColor: theme.colors.border
@@ -707,7 +736,7 @@ export function StyleCustomizer() {
                     {theme.colors.secondary && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border"
+                          className="w-full aspect-square rounded-lg border"
                           style={{
                             backgroundColor: theme.colors.secondary,
                             borderColor: theme.colors.border
@@ -724,7 +753,7 @@ export function StyleCustomizer() {
                     {theme.colors.secondaryForeground && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border"
+                          className="w-full aspect-square rounded-lg border"
                           style={{
                             backgroundColor: theme.colors.secondaryForeground,
                             borderColor: theme.colors.border
@@ -741,7 +770,7 @@ export function StyleCustomizer() {
                     {theme.colors.accent && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border"
+                          className="w-full aspect-square rounded-lg border"
                           style={{
                             backgroundColor: theme.colors.accent,
                             borderColor: theme.colors.border
@@ -758,7 +787,7 @@ export function StyleCustomizer() {
                     {theme.colors.accentForeground && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border"
+                          className="w-full aspect-square rounded-lg border"
                           style={{
                             backgroundColor: theme.colors.accentForeground,
                             borderColor: theme.colors.border
@@ -781,7 +810,7 @@ export function StyleCustomizer() {
                     {theme.colors.card && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border"
+                          className="w-full aspect-square rounded-lg border"
                           style={{
                             backgroundColor: theme.colors.card,
                             borderColor: theme.colors.border
@@ -798,7 +827,7 @@ export function StyleCustomizer() {
                     {theme.colors.cardForeground && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border"
+                          className="w-full aspect-square rounded-lg border"
                           style={{
                             backgroundColor: theme.colors.cardForeground,
                             borderColor: theme.colors.border
@@ -815,7 +844,7 @@ export function StyleCustomizer() {
                     {theme.colors.popover && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border"
+                          className="w-full aspect-square rounded-lg border"
                           style={{
                             backgroundColor: theme.colors.popover,
                             borderColor: theme.colors.border
@@ -832,7 +861,7 @@ export function StyleCustomizer() {
                     {theme.colors.popoverForeground && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border"
+                          className="w-full aspect-square rounded-lg border"
                           style={{
                             backgroundColor: theme.colors.popoverForeground,
                             borderColor: theme.colors.border
@@ -848,7 +877,7 @@ export function StyleCustomizer() {
                     {/* Muted */}
                     <div className="space-y-2">
                       <div
-                        className="h-24 rounded-lg border"
+                        className="w-full aspect-square rounded-lg border"
                         style={{
                           backgroundColor: theme.colors.muted,
                           borderColor: theme.colors.border
@@ -864,7 +893,7 @@ export function StyleCustomizer() {
                     {theme.colors.mutedForeground && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border"
+                          className="w-full aspect-square rounded-lg border"
                           style={{
                             backgroundColor: theme.colors.mutedForeground,
                             borderColor: theme.colors.border
@@ -887,7 +916,7 @@ export function StyleCustomizer() {
                     {theme.colors.border && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border-2"
+                          className="w-full aspect-square rounded-lg border-2"
                           style={{
                             backgroundColor: theme.colors.border,
                             borderColor: theme.colors.foreground
@@ -904,7 +933,7 @@ export function StyleCustomizer() {
                     {theme.colors.input && (
                       <div className="space-y-2">
                         <div
-                          className="h-24 rounded-lg border"
+                          className="w-full aspect-square rounded-lg border"
                           style={{
                             backgroundColor: theme.colors.input,
                             borderColor: theme.colors.border
@@ -920,7 +949,7 @@ export function StyleCustomizer() {
                     {/* Ring */}
                     <div className="space-y-2">
                       <div
-                        className="h-24 rounded-lg border"
+                        className="w-full aspect-square rounded-lg border"
                         style={{
                           backgroundColor: theme.colors.primary,
                           borderColor: theme.colors.border
@@ -995,7 +1024,14 @@ export function StyleCustomizer() {
                           <div className="h-64 flex items-end justify-between gap-2">
                             {Array.from({ length: 12 }).map((_, i) => (
                               <div key={i} className="flex-1 flex items-end">
-                                <div className="w-full rounded-t" style={{ height: `${Math.random() * 60 + 20}%`, backgroundColor: theme.colors.primary, borderRadius: `${theme.radius}px ${theme.radius}px 0 0` }} />
+                                <div 
+                                  className="w-full rounded-t" 
+                                  style={{ 
+                                    height: barHeights[i] ? `${barHeights[i]}%` : '20%', 
+                                    backgroundColor: theme.colors.primary, 
+                                    borderRadius: `${theme.radius}px ${theme.radius}px 0 0` 
+                                  }} 
+                                />
                               </div>
                             ))}
                           </div>
