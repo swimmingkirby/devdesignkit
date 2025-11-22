@@ -22,8 +22,10 @@ The DevUX Scraper analyzes websites and generates machine-readable design artifa
 
 ### Scraper Features
 
+✅ **Hybrid Scraping** - Combines DOM + Vision AI for best results (recommended)  
 ✅ **URL Scraping** - DOM-based analysis via Playwright (most accurate)  
-✅ **Image Analysis** - AI vision-based analysis via Hugging Face LLM (experimental)  
+✅ **Image Analysis** - AI vision-based analysis via OpenAI GPT-4o (experimental)  
+✅ **Intelligent Merging** - Best-of-both strategy for comprehensive extraction  
 ✅ **Color Normalization** - LAB color space clustering with k-means  
 ✅ **Spacing Detection** - Automatic base unit detection  
 ✅ **Radius Extraction** - Small/medium/large classification  
@@ -80,14 +82,16 @@ Open [http://localhost:3000](http://localhost:3000) with your browser.
 
 Navigate to [http://localhost:3000/information-scraper](http://localhost:3000/information-scraper) to analyze any website's design system.
 
-**Two Analysis Modes:**
-- **URL Scraper** - Enter a website URL for DOM-based analysis (most accurate, no API key needed)
-- **Image Analyzer** - Upload a screenshot for AI vision-based analysis (requires Hugging Face API token)
+**Three Analysis Modes:**
+- **Hybrid Scraper** - Combines DOM + Vision AI (most comprehensive, recommended)
+- **DOM Scraper** - DOM-based analysis only (most accurate, no API key needed)
+- **Vision AI Analyzer** - Upload screenshot for AI vision-based analysis (requires OpenAI API key)
 
 Need help?
 - Setup: [docs/SETUP.md](docs/SETUP.md)
-- Hugging Face integration: [docs/HF_INTEGRATION.md](docs/HF_INTEGRATION.md)
+- Hybrid Scraper: [docs/HYBRID_SCRAPER.md](docs/HYBRID_SCRAPER.md)
 - Image workflow: [docs/IMAGE_ANALYSIS.md](docs/IMAGE_ANALYSIS.md)
+- Implementation details: [docs/scraper-implementation.md](docs/scraper-implementation.md)
 
 ## Adding shadcn/ui Components
 
@@ -120,7 +124,11 @@ npx shadcn@latest add dialog
 │   └── ui/                      # shadcn/ui components
 ├── lib/                         # Utilities
 │   ├── utils.ts                 # cn() utility
-│   ├── scraper/                 # URL scraper implementation
+│   ├── hybrid-scraper/          # Hybrid scraper (DOM + Vision AI)
+│   │   ├── index.ts             # Main orchestrator
+│   │   ├── screenshot.ts        # Screenshot capture
+│   │   └── merger.ts            # Intelligent merging logic
+│   ├── scraper/                 # DOM scraper implementation
 │   │   ├── index.ts             # Main orchestrator
 │   │   ├── browser.ts           # Playwright integration
 │   │   ├── tokens.ts            # Token extraction
@@ -130,9 +138,9 @@ npx shadcn@latest add dialog
 │   │   ├── shadow-normalizer.ts
 │   │   ├── component-extractor.ts
 │   │   └── layout-extractor.ts
-│   └── image-analyzer/          # Image analysis via LLM
+│   └── image-analyzer/          # Vision AI analyzer
 │       ├── index.ts             # Main orchestrator
-│       ├── huggingface-client.ts # HF API integration
+│       ├── huggingface-client.ts # OpenAI/HF API integration
 │       ├── token-parser.ts      # Token extraction from LLM
 │       ├── component-parser.ts  # Component identification
 │       ├── layout-parser.ts     # Layout structure parsing
@@ -147,7 +155,41 @@ npx shadcn@latest add dialog
 
 ## Scraper API
 
-### POST `/api/scrape` - URL Analysis
+### POST `/api/hybrid-scrape` - Hybrid Analysis (Recommended)
+
+**Request:**
+```json
+{
+  "url": "https://example.com",
+  "options": {
+    "enableDOMScraping": true,
+    "enableVisionAI": true,
+    "mergeStrategy": "best-of-both"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "tokens": { "colors": {...}, "fonts": {...}, ... },
+  "components": { "buttons": [...], "cards": [...], ... },
+  "layouts": { "sections": [...] },
+  "debug": { "url": "...", "logs": [...], "errors": [...] },
+  "individual": {
+    "dom": { ... },
+    "vision": { ... }
+  },
+  "metadata": {
+    "strategy": "best-of-both",
+    "domScrapingEnabled": true,
+    "visionAIEnabled": true,
+    "screenshotTaken": true
+  }
+}
+```
+
+### POST `/api/scrape` - DOM-Only Analysis
 
 **Request:**
 ```json

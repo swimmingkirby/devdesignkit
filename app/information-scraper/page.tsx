@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Download, AlertCircle, Upload, Link as LinkIcon, ZoomIn } from "lucide-react";
+import { Loader2, Download, AlertCircle, Upload, Link as LinkIcon, ZoomIn, Combine } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function InformationScraper() {
-  const [inputMode, setInputMode] = useState<"url" | "image">("url");
+  const [inputMode, setInputMode] = useState<"url" | "image" | "hybrid">("hybrid");
   const [url, setUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -46,6 +46,41 @@ export default function InformationScraper() {
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to scrape URL");
+      }
+
+      const data = await response.json();
+      setResults(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHybridScrape = async () => {
+    if (!url) return;
+    
+    setLoading(true);
+    setError(null);
+    setResults(null);
+
+    try {
+      const response = await fetch("/api/hybrid-scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          url,
+          options: {
+            enableDOMScraping: true,
+            enableVisionAI: true,
+            mergeStrategy: "best-of-both",
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to hybrid scrape");
       }
 
       const data = await response.json();
@@ -117,17 +152,59 @@ export default function InformationScraper() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as "url" | "image")} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
+            <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as "url" | "image" | "hybrid")} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="hybrid">
+                  <Combine className="mr-2 h-4 w-4" />
+                  Hybrid (Best)
+                </TabsTrigger>
                 <TabsTrigger value="url">
                   <LinkIcon className="mr-2 h-4 w-4" />
-                  URL Scraper
+                  DOM Only
                 </TabsTrigger>
                 <TabsTrigger value="image">
                   <Upload className="mr-2 h-4 w-4" />
-                  Image Analyzer
+                  Vision AI Only
                 </TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="hybrid" className="space-y-4 mt-0">
+                <div className="flex gap-4">
+                  <Input 
+                    placeholder="https://example.com" 
+                    value={url} 
+                    onChange={(e) => setUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleHybridScrape()}
+                    disabled={loading}
+                    className="flex-1"
+                  />
+                  <Button onClick={handleHybridScrape} disabled={loading || !url}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing
+                      </>
+                    ) : (
+                      "Analyze URL"
+                    )}
+                  </Button>
+                </div>
+                <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Combine className="h-4 w-4" />
+                    Hybrid Approach (Recommended)
+                  </h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Combines DOM scraping with AI vision for the most comprehensive analysis:
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                    <li>✓ Precise CSS values from DOM inspection</li>
+                    <li>✓ Visual layout understanding from AI</li>
+                    <li>✓ Intelligent merging of both approaches</li>
+                    <li>✓ Best accuracy and completeness</li>
+                  </ul>
+                </div>
+              </TabsContent>
               
               <TabsContent value="url" className="space-y-4 mt-0">
                 <div className="flex gap-4">
@@ -151,7 +228,7 @@ export default function InformationScraper() {
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Enter a website URL to extract design system via DOM scraping (most accurate).
+                  DOM-only scraping: Most accurate for CSS values, no AI needed.
                 </p>
               </TabsContent>
               
@@ -218,7 +295,7 @@ export default function InformationScraper() {
                   )}
                   
                   <p className="text-sm text-muted-foreground">
-                    Upload a website screenshot to analyze design via AI vision model (experimental).
+                    Vision AI only: Analyze screenshots when DOM access isn&apos;t available (experimental).
                   </p>
                 </div>
               </TabsContent>
@@ -244,10 +321,11 @@ export default function InformationScraper() {
             </div>
 
             <Tabs defaultValue="tokens" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="tokens">Tokens</TabsTrigger>
                 <TabsTrigger value="components">Components</TabsTrigger>
                 <TabsTrigger value="layouts">Layouts</TabsTrigger>
+                {results.metadata && <TabsTrigger value="metadata">Metadata</TabsTrigger>}
                 <TabsTrigger value="debug">Debug Log</TabsTrigger>
               </TabsList>
               
@@ -293,6 +371,79 @@ export default function InformationScraper() {
                 </Card>
               </TabsContent>
 
+              {results.metadata && (
+                <TabsContent value="metadata" className="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Hybrid Scraper Metadata</CardTitle>
+                      <CardDescription>Information about the scraping process and merge strategy.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div>
+                        <h3 className="text-sm font-semibold mb-2">Scraping Configuration</h3>
+                        <div className="bg-muted p-4 rounded-lg space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Strategy:</span>
+                            <span className="text-sm font-medium">{results.metadata.strategy}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">DOM Scraping:</span>
+                            <span className="text-sm font-medium">{results.metadata.domScrapingEnabled ? "✓ Enabled" : "✗ Disabled"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Vision AI:</span>
+                            <span className="text-sm font-medium">{results.metadata.visionAIEnabled ? "✓ Enabled" : "✗ Disabled"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Screenshot:</span>
+                            <span className="text-sm font-medium">{results.metadata.screenshotTaken ? "✓ Captured" : "✗ Not Captured"}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {results.individual && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2">Individual Results</h3>
+                          <div className="space-y-4">
+                            {results.individual.dom && (
+                              <Card>
+                                <CardHeader className="pb-3">
+                                  <CardTitle className="text-base">DOM Scraper Results</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="text-sm space-y-1">
+                                    <div>Colors: {Object.keys(results.individual.dom.tokens.colors).length}</div>
+                                    <div>Buttons: {results.individual.dom.components.buttons.length}</div>
+                                    <div>Cards: {results.individual.dom.components.cards.length}</div>
+                                    <div>Layout Sections: {results.individual.dom.layouts.sections.length}</div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )}
+                            
+                            {results.individual.vision && (
+                              <Card>
+                                <CardHeader className="pb-3">
+                                  <CardTitle className="text-base">Vision AI Results</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="text-sm space-y-1">
+                                    <div>Colors: {Object.keys(results.individual.vision.tokens.colors).length}</div>
+                                    <div>Buttons: {results.individual.vision.components.buttons.length}</div>
+                                    <div>Cards: {results.individual.vision.components.cards.length}</div>
+                                    <div>Layout Sections: {results.individual.vision.layouts.sections.length}</div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              )}
+              
               <TabsContent value="debug" className="mt-4">
                 <Card>
                   <CardHeader>

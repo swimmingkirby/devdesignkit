@@ -1,4 +1,4 @@
-import { ScrapeResult, DebugLog } from "./types";
+import { ScrapeResult, DebugLog, Components } from "./types";
 import { fetchAndRender } from "./browser";
 import { extractTokens } from "./tokens";
 import { extractComponents } from "./component-extractor";
@@ -47,7 +47,7 @@ const DEFAULT_TOKENS = {
   },
 };
 
-const DEFAULT_COMPONENTS = {
+const DEFAULT_COMPONENTS: Components = {
   buttons: [],
   cards: [],
   navItems: [],

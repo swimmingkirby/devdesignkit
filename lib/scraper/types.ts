@@ -110,6 +110,9 @@ export interface LayoutSection {
     cardCount?: number;
     layoutType?: "grid" | "flex" | "block";
     dataAttributes?: Record<string, string>;
+    source?: "dom" | "vision-ai" | "hybrid";
+    domType?: string;
+    visionType?: string;
   };
 }
 
