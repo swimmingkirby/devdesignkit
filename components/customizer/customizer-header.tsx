@@ -2,50 +2,27 @@
 
 import * as React from "react"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { RotateCcw, Download, Share2, Save, Code } from "lucide-react"
+import { Palette } from "lucide-react"
 
 export function CustomizerHeader() {
-  return (
-    <header className="h-12 bg-background flex">
-      {/* Left side - Theme Selector (matches sidebar width) */}
-      <div className="w-96 flex items-center px-4">
-        <Select defaultValue="default">
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Theme" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="default">Default</SelectItem>
-            <SelectItem value="dark">Dark</SelectItem>
-            <SelectItem value="light">Light</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    return (
+        <header className="h-14 flex items-center justify-between px-6 border-b border-[#444] bg-[#2C2C2C] text-white shrink-0">
+            {/* Left side - Logo */}
+            <div className="flex items-center gap-2 font-semibold text-lg">
+                <Palette className="h-5 w-5" />
+                <span>DevDesignKit</span>
+            </div>
 
-      {/* Right side - Action Buttons */}
-      <div className="flex-1 flex items-center justify-end gap-1.5 px-4">
-        <Button variant="ghost" size="sm">
-          <RotateCcw className="h-4 w-4" />
-          Reset
-        </Button>
-        <Button variant="ghost" size="sm">
-          <Download className="h-4 w-4" />
-          Import
-        </Button>
-        <Button variant="ghost" size="sm">
-          <Share2 className="h-4 w-4" />
-          Share
-        </Button>
-        <Button variant="ghost" size="sm">
-          <Save className="h-4 w-4" />
-          Save
-        </Button>
-        <Button variant="ghost" size="sm">
-          <Code className="h-4 w-4" />
-          Code
-        </Button>
-      </div>
-    </header>
-  )
+            {/* Right side - Auth Buttons */}
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-[#3C3C3C]">
+                    Sign In
+                </Button>
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white border-none">
+                    Sign Up
+                </Button>
+            </div>
+        </header>
+    )
 }
 
