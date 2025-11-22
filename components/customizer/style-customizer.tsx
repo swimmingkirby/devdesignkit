@@ -17,8 +17,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { CustomizerHeader } from "./customizer-header"
 import { ActionBar } from "./action-bar"
 import { LayoutDashboard, TrendingUp, BarChart3, FolderKanban, Users, Database, FileText, HelpCircle, Settings, Search, ChevronUp, Plus, Pencil, Home, ChevronRight } from "lucide-react"
-import { presetThemes, ThemeKey } from "@/lib/themes"
-import { ThemeTokens } from "@/lib/types/theme"
+import { presetThemes } from "@/lib/themes/preset-themes"
+import { ThemeKey, ThemeTokens } from "@/lib/themes/theme-types"
 
 const FONT_OPTIONS = [
   { value: "Inter", label: "Inter" },
@@ -32,14 +32,14 @@ const FONT_OPTIONS = [
 ]
 
 interface StyleCustomizerProps {
-  initialTheme?: ThemeKey | null
+  initialTheme?: string | null
 }
 
 export function StyleCustomizer({ initialTheme }: StyleCustomizerProps = {}) {
   const { theme, updateTheme } = useTheme()
-  const [selectedTheme, setSelectedTheme] = React.useState<ThemeKey>(initialTheme || "minimal")
+  const [selectedTheme, setSelectedTheme] = React.useState<string>(initialTheme || "minimal-light")
   const [barHeights, setBarHeights] = React.useState<number[]>([])
-  
+
   // UX Settings state (local only, not connected to theme tokens yet)
   const [uxSettings, setUxSettings] = React.useState({
     touchTarget: false,
@@ -64,11 +64,11 @@ export function StyleCustomizer({ initialTheme }: StyleCustomizerProps = {}) {
   }
 
   // Handle theme selection from dropdown
-  const handleThemeChange = React.useCallback((themeKey: ThemeKey) => {
+  const handleThemeChange = React.useCallback((themeKey: string) => {
     setSelectedTheme(themeKey)
-    const selectedThemeTokens = presetThemes[themeKey]
-    if (selectedThemeTokens) {
-      updateTheme(selectedThemeTokens)
+    const selectedThemeData = presetThemes[themeKey]
+    if (selectedThemeData) {
+      updateTheme(selectedThemeData.tokens)
     }
   }, [updateTheme])
 
@@ -98,29 +98,31 @@ export function StyleCustomizer({ initialTheme }: StyleCustomizerProps = {}) {
     if (initialTheme && presetThemes[initialTheme]) {
       // Theme was passed via URL param - set it
       setSelectedTheme(initialTheme)
-      const initialThemeTokens = presetThemes[initialTheme]
-      updateTheme(initialThemeTokens)
+      const initialThemeData = presetThemes[initialTheme]
+      updateTheme(initialThemeData.tokens)
     } else {
       // No theme param - try to detect which preset matches current theme
-      const matchingPreset = Object.entries(presetThemes).find(
-        ([key, presetTheme]) => {
+      const matchingPreset = Object.values(presetThemes).find(
+        (presetTheme) => {
           return (
-            presetTheme.colors.primary === theme.colors.primary &&
-            presetTheme.colors.background === theme.colors.background &&
-            presetTheme.radius === theme.radius
+            presetTheme.tokens.colors.primary === theme.colors.primary &&
+            presetTheme.tokens.colors.background === theme.colors.background &&
+            presetTheme.tokens.radius === theme.radius
           )
         }
       )
-      
+
       if (matchingPreset) {
         // Found matching preset - sync the dropdown
-        setSelectedTheme(matchingPreset[0] as ThemeKey)
+        setSelectedTheme(matchingPreset.id)
       } else {
-        // No match - initialize with default
-        const defaultTheme = presetThemes[selectedTheme]
-        if (defaultTheme) {
-          updateTheme(defaultTheme)
-        }
+        // No match - initialize with default if needed, or keep current
+        // If we want to force a default:
+        // const defaultTheme = presetThemes["minimal-light"]
+        // if (defaultTheme) {
+        //   updateTheme(defaultTheme.tokens)
+        //   setSelectedTheme(defaultTheme.id)
+        // }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,6 +131,34 @@ export function StyleCustomizer({ initialTheme }: StyleCustomizerProps = {}) {
   // Generate bar heights only on client to avoid hydration mismatch
   React.useEffect(() => {
     setBarHeights(Array.from({ length: 12 }, () => Math.random() * 60 + 20))
+
+    // Sync Wizard State
+    const savedWizardState = localStorage.getItem("wizard-state")
+    if (savedWizardState) {
+      try {
+        const parsed = JSON.parse(savedWizardState)
+        if (parsed.ux) {
+          setUxSettings((prev) => ({
+            ...prev,
+            // Focus Glow -> Focus Rings
+            focusRings: parsed.ux.focusGlow ?? prev.focusRings,
+            // Smooth Transitions -> Reduced Motion (Inverse)
+            reducedMotion: parsed.ux.smoothTransitions ? false : prev.reducedMotion,
+            // Microinteractions -> Strong Hover
+            strongHover: (parsed.ux.buttonMicroAnimations || parsed.ux.cardHoverLift) ?? prev.strongHover,
+            // Heading Hierarchy -> Headings Enabled
+            headingsEnabled: parsed.ux.headingHierarchy ?? prev.headingsEnabled,
+            // Relaxed Line Height -> Line Height
+            lineHeight: parsed.ux.relaxedLineHeight ? "relaxed" : prev.lineHeight,
+            // Section Spacing -> Density (Cozy as "rhythm")
+            density: parsed.ux.sectionSpacingRhythm ? "cozy" : prev.density,
+            // Depth Shadows -> (No direct mapping in current state, but could affect shadows if we had it)
+          }))
+        }
+      } catch (e) {
+        console.error("Failed to sync wizard state", e)
+      }
+    }
   }, [])
 
   return (
@@ -1314,13 +1344,13 @@ export function StyleCustomizer({ initialTheme }: StyleCustomizerProps = {}) {
                           <div className="h-64 flex items-end justify-between gap-2">
                             {Array.from({ length: 12 }).map((_, i) => (
                               <div key={i} className="flex-1 flex items-end">
-                                <div 
-                                  className="w-full rounded-t" 
-                                  style={{ 
-                                    height: barHeights[i] ? `${barHeights[i]}%` : '20%', 
-                                    backgroundColor: theme.colors.primary, 
-                                    borderRadius: `${theme.radius}px ${theme.radius}px 0 0` 
-                                  }} 
+                                <div
+                                  className="w-full rounded-t"
+                                  style={{
+                                    height: barHeights[i] ? `${barHeights[i]}%` : '20%',
+                                    backgroundColor: theme.colors.primary,
+                                    borderRadius: `${theme.radius}px ${theme.radius}px 0 0`
+                                  }}
                                 />
                               </div>
                             ))}

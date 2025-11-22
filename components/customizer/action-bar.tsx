@@ -2,13 +2,13 @@
 
 import * as React from "react"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RotateCcw, Share2, Save, Code } from "lucide-react"
-import { themeLabels, ThemeKey } from "@/lib/themes"
+import { themesByAesthetic } from "@/lib/themes/aesthetic-groups"
 
 interface ActionBarProps {
-    selectedTheme: ThemeKey
-    onThemeChange: (theme: ThemeKey) => void
+    selectedTheme: string
+    onThemeChange: (theme: string) => void
 }
 
 export function ActionBar({ selectedTheme, onThemeChange }: ActionBarProps) {
@@ -20,15 +20,22 @@ export function ActionBar({ selectedTheme, onThemeChange }: ActionBarProps) {
                     <SelectTrigger className="h-8 w-full bg-[#1E1E1E] border-[#444] text-white hover:bg-[#2C2C2C]">
                         <SelectValue placeholder="Select a theme" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#1E1E1E] border-[#444]">
-                        {Object.entries(themeLabels).map(([key, label]) => (
-                            <SelectItem 
-                                key={key} 
-                                value={key}
-                                className="text-white hover:bg-[#3C3C3C] focus:bg-[#3C3C3C]"
-                            >
-                                {label}
-                            </SelectItem>
+                    <SelectContent className="bg-[#1E1E1E] border-[#444] max-h-[400px]">
+                        {Object.entries(themesByAesthetic).map(([aesthetic, themes]) => (
+                            <SelectGroup key={aesthetic}>
+                                <SelectLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-1.5">
+                                    {aesthetic}
+                                </SelectLabel>
+                                {themes.map((theme) => (
+                                    <SelectItem
+                                        key={theme.id}
+                                        value={theme.id}
+                                        className="text-white hover:bg-[#3C3C3C] focus:bg-[#3C3C3C] pl-6"
+                                    >
+                                        {theme.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectGroup>
                         ))}
                     </SelectContent>
                 </Select>

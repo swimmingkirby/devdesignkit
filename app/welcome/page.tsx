@@ -41,53 +41,27 @@ export default function WelcomePage() {
           </div>
 
           {/* Action Cards */}
-          <div className="grid md:grid-cols-2 gap-6 mt-12">
-            {/* Start With Inspiration */}
-            <Card 
-              className="bg-[#1E1E1E] border-[#444] hover:border-[#555] transition-all cursor-pointer group"
-              onClick={() => router.push("/inspiration")}
+          <div className="flex justify-center mt-12">
+            <Card
+              className="bg-[#1E1E1E] border-[#444] hover:border-[#555] transition-all cursor-pointer group max-w-md w-full"
+              onClick={() => router.push("/wizard/product")}
             >
               <CardContent className="p-8 flex flex-col items-center space-y-4">
-                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Sparkles className="h-8 w-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-semibold">Start With Inspiration</h2>
+                <h2 className="text-2xl font-semibold">Start New Project</h2>
                 <p className="text-gray-400 text-center">
-                  Upload screenshots and let AI extract your design system
+                  Define your product, choose a style, and customize your design system.
                 </p>
-                <Button 
+                <Button
                   className="mt-4 w-full bg-blue-600 hover:bg-blue-700"
                   onClick={(e) => {
                     e.stopPropagation()
-                    router.push("/inspiration")
+                    router.push("/wizard/product")
                   }}
                 >
                   Get Started
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Start With Presets */}
-            <Card 
-              className="bg-[#1E1E1E] border-[#444] hover:border-[#555] transition-all cursor-pointer group"
-              onClick={() => router.push("/presets")}
-            >
-              <CardContent className="p-8 flex flex-col items-center space-y-4">
-                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Layers className="h-8 w-8 text-white" />
-                </div>
-                <h2 className="text-2xl font-semibold">Start With Presets</h2>
-                <p className="text-gray-400 text-center">
-                  Choose from curated design themes and customize to your needs
-                </p>
-                <Button 
-                  className="mt-4 w-full bg-blue-600 hover:bg-blue-700"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    router.push("/presets")
-                  }}
-                >
-                  Browse Presets
                 </Button>
               </CardContent>
             </Card>

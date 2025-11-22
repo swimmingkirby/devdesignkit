@@ -62,8 +62,15 @@ export default function InspirationPage() {
   }
 
   const handleContinue = () => {
-    // Navigate to loading screen
-    router.push("/loading")
+    // Check if we came from the wizard
+    const urlParams = new URLSearchParams(window.location.search)
+    const fromWizard = urlParams.get("from") === "wizard"
+
+    if (fromWizard) {
+      router.push("/wizard/ux?from=inspiration")
+    } else {
+      router.push("/loading")
+    }
   }
 
   React.useEffect(() => {
@@ -107,11 +114,10 @@ export default function InspirationPage() {
           {/* Dropzone */}
           {canUploadMore && (
             <Card
-              className={`bg-[#1E1E1E] border-2 border-dashed transition-all ${
-                isDragging
-                  ? "border-blue-500 bg-[#252525]"
-                  : "border-[#444] hover:border-[#555]"
-              }`}
+              className={`bg-[#1E1E1E] border-2 border-dashed transition-all ${isDragging
+                ? "border-blue-500 bg-[#252525]"
+                : "border-[#444] hover:border-[#555]"
+                }`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}

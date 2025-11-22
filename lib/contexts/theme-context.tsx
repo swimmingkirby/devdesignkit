@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useCallback } from "react"
-import { ThemeTokens } from "@/lib/types/theme"
+import { ThemeTokens } from "@/lib/themes/theme-types"
 
 const defaultTheme: ThemeTokens = {
   colors: {
