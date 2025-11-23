@@ -65,13 +65,58 @@ const UX_GUIDELINES_MAP = {
 }
 
 export function generateUxGuidelines(uxSettings?: UxSettings): string {
-    if (!uxSettings) {
-        return `# UX Guidelines
+    let markdown = `# UX Guidelines
 
-No UX enhancements were selected during the wizard.
+This document outlines the UX principles and enhancements included in your design system.
 
-You can still apply these principles manually by referring to common UX best practices.
+---
+
+## Baseline UX Principles
+
+These core principles are built into your design system by default to ensure a consistent, accessible, and polished user experience:
+
+### 1. Consistent Spacing Scale
+Your design system uses a predictable spacing scale (typically 4px, 8px, 16px, 32px, 64px) to create visual rhythm and maintain consistency across all components and layouts.
+
+### 2. Predictable Border-Radius Scale
+Border radius values follow a defined scale (small, medium, large) ensuring consistent roundness across buttons, cards, inputs, and other UI elements.
+
+### 3. Accessible Color Contrast
+All color combinations meet WCAG accessibility standards for contrast ratios, ensuring text and interactive elements are readable for all users.
+
+### 4. Clear Visual Hierarchy
+Typography, spacing, and color are used strategically to establish clear information hierarchy, guiding users through content naturally.
+
+### 5. Minimal Cognitive Load
+The design system prioritizes simplicity and clarity, reducing unnecessary visual complexity to help users focus on their tasks.
+
+### 6. Consistent Interactive States
+All interactive elements (buttons, links, inputs) have clearly defined hover, focus, and active states for predictable user feedback.
+
+### 7. Meaningful Motion
+Animations and transitions are used purposefully to provide feedback, guide attention, or clarify relationships—never just for decoration.
+
+### 8. Readability-Focused Line-Height
+Text content uses comfortable line-height values (1.5–1.8) optimized for reading, reducing eye strain and improving comprehension.
+
+### 9. Standardized Shadows and Elevation
+Shadow styles follow a consistent elevation system, creating clear visual layers and depth hierarchy throughout the interface.
+
+### 10. Strong Focus Visibility
+Keyboard focus indicators are prominent and consistent, ensuring accessibility for keyboard-only users and assistive technologies.
+
+---
+
+## Additional UX Enhancements You Selected
+
 `
+
+    if (!uxSettings) {
+        markdown += `*(No optional UX enhancements were selected.)*
+
+You can still apply additional UX patterns manually by referring to common best practices.
+`
+        return markdown
     }
 
     const enabledOptions = Object.entries(uxSettings)
@@ -79,26 +124,18 @@ You can still apply these principles manually by referring to common UX best pra
         .map(([key]) => key as keyof typeof UX_GUIDELINES_MAP)
 
     if (enabledOptions.length === 0) {
-        return `# UX Guidelines
+        markdown += `*(No optional UX enhancements were selected.)*
 
-No UX enhancements were selected during the wizard.
-
-You can still apply these principles manually by referring to common UX best practices.
+You can still apply additional UX patterns manually by referring to common best practices.
 `
-    }
-
-    let markdown = `# UX Guidelines
-
-This document summarizes the UX enhancements you selected during theme creation. These guidelines help maintain consistent interaction patterns across your product.
-
----
+    } else {
+        markdown += `The following optional enhancements were enabled during theme creation:
 
 `
-
-    enabledOptions.forEach((key) => {
-        const guideline = UX_GUIDELINES_MAP[key]
-        if (guideline) {
-            markdown += `## ${guideline.title}
+        enabledOptions.forEach((key) => {
+            const guideline = UX_GUIDELINES_MAP[key]
+            if (guideline) {
+                markdown += `### ${guideline.title}
 **Status:** Enabled ✓
 
 ${guideline.description}
@@ -106,16 +143,17 @@ ${guideline.description}
 **Implementation:**  
 ${guideline.guidance}
 
----
-
 `
-        }
-    })
+            }
+        })
+    }
 
     markdown += `
-## Additional Notes
+---
 
-These UX enhancements are recommendations based on your selections. You can adjust the implementation details to fit your specific use case and design system requirements.
+## Notes
+
+These UX guidelines are recommendations based on your design system configuration. You can adjust implementation details to fit your specific use case and requirements.
 
 For more information on implementing these patterns, refer to your design system documentation or consult with your development team.
 `
