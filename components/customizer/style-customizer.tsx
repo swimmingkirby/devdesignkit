@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { CustomizerHeader } from "./customizer-header"
 import { ActionBar } from "./action-bar"
-import { LayoutDashboard, TrendingUp, BarChart3, FolderKanban, Users, Database, FileText, HelpCircle, Settings, Search, ChevronUp, Plus, Pencil, Home, ChevronRight } from "lucide-react"
+import { LayoutDashboard, TrendingUp, BarChart3, FolderKanban, Users, Database, FileText, HelpCircle, Settings, Search, ChevronUp, Plus, Pencil, Home, ChevronRight, MousePointerClick, Maximize2, Minimize2 } from "lucide-react"
 import { presetThemes } from "@/lib/themes/preset-themes"
 import { ThemeTokens } from "@/lib/types/theme"
 import { useScrapedData } from "@/lib/hooks/use-scraped-data"
@@ -78,6 +78,82 @@ const FONT_OPTIONS = [
   { value: "Raleway", label: "Raleway" },
 ]
 
+// Inspect Wrapper Component
+interface InspectWrapperProps {
+  children: React.ReactNode
+  isInspectMode: boolean
+  tokenData: {
+    color?: string
+    font?: string
+    radius?: string
+    shadow?: string
+    [key: string]: any
+  }
+}
+
+function InspectWrapper({ children, isInspectMode, tokenData }: InspectWrapperProps) {
+  const [showTooltip, setShowTooltip] = React.useState(false)
+
+  if (!isInspectMode) return <>{children}</>
+
+  return (
+    <div
+      className="relative inline-block"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onClick={(e) => {
+        if (isInspectMode) {
+          e.preventDefault()
+          e.stopPropagation()
+        }
+      }}
+    >
+      {children}
+      {showTooltip && (
+        <div className="absolute z-50 bg-[#1E1E1E] border border-[#444] rounded-md p-3 shadow-lg min-w-[200px] pointer-events-none"
+          style={{
+            top: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            marginTop: '8px'
+          }}
+        >
+          <div className="text-xs space-y-1.5">
+            <div className="font-semibold text-white mb-2 border-b border-[#444] pb-1">Token Details</div>
+            {tokenData.color && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Color:</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded border border-[#444]" style={{ backgroundColor: tokenData.color }} />
+                  <span className="text-gray-200 font-mono text-[10px]">{tokenData.color}</span>
+                </div>
+              </div>
+            )}
+            {tokenData.font && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Font:</span>
+                <span className="text-gray-200 font-mono text-[10px]">{tokenData.font}</span>
+              </div>
+            )}
+            {tokenData.radius && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Radius:</span>
+                <span className="text-gray-200 font-mono text-[10px]">{tokenData.radius}</span>
+              </div>
+            )}
+            {tokenData.shadow && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Shadow:</span>
+                <span className="text-gray-200 font-mono text-[10px] max-w-[120px] truncate">{tokenData.shadow}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function StyleCustomizer() {
   const { theme: rawTheme, updateTheme, activeThemeId } = useTheme()
   // Type assertion to include optional properties
@@ -98,6 +174,9 @@ export function StyleCustomizer() {
   const [barHeights, setBarHeights] = React.useState<number[]>([])
   const [importedThemeName, setImportedThemeName] = React.useState<string | null>(null)
   const [showSuccessBanner, setShowSuccessBanner] = React.useState(false)
+  const [isInspectMode, setIsInspectMode] = React.useState(false)
+  const [isFullscreen, setIsFullscreen] = React.useState(false)
+  const [inspectTooltip, setInspectTooltip] = React.useState<{ x: number; y: number; data: any } | null>(null)
   const isImportingRef = React.useRef(false) // Track if we're importing to prevent theme reset
 
   // UX Settings state (local only, not connected to theme tokens yet)
@@ -334,13 +413,14 @@ export function StyleCustomizer() {
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Customization Panel */}
-        <aside className="w-[480px] max-w-[480px] min-w-[480px] flex flex-col border-r border-[#444] bg-[#2C2C2C] shrink-0">
-          {/* Scrollable Sidebar Content */}
-          <div className="flex-1 overflow-y-auto" style={{
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#444 #2C2C2C',
-          }}>
-            <style jsx>{`
+        {!isFullscreen && (
+          <aside className="w-[480px] max-w-[480px] min-w-[480px] flex flex-col border-r border-[#444] bg-[#2C2C2C] shrink-0">
+            {/* Scrollable Sidebar Content */}
+            <div className="flex-1 overflow-y-auto" style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#444 #2C2C2C',
+            }}>
+              <style jsx>{`
               div::-webkit-scrollbar {
                 width: 8px;
               }
@@ -355,771 +435,772 @@ export function StyleCustomizer() {
                 background: #555;
               }
             `}</style>
-            <div className="p-6">
-              {/* Theme Preview Card */}
-              <div className="mb-6 p-4 bg-[#1E1E1E] rounded-lg border border-[#444]">
-                <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">
-                  Current Theme Preview
-                </div>
-                <div className="flex items-center gap-2 mb-4">
-                  {/* Palette Row */}
-                  <div className="flex items-center gap-1.5 bg-[#111] p-1.5 rounded-full border border-[#333]">
-                    {[
-                      { color: theme.colors.primary, label: "Primary" },
-                      { color: theme.colors.background, label: "Background" },
-                      { color: theme.colors.foreground, label: "Foreground" },
-                      { color: theme.colors.accent || theme.colors.primary, label: "Accent" },
-                      { color: theme.colors.muted, label: "Muted" },
-                    ].map((swatch, i) => (
-                      <div
-                        key={i}
-                        className="group relative"
-                      >
+              <div className="p-6">
+                {/* Theme Preview Card */}
+                <div className="mb-6 p-4 bg-[#1E1E1E] rounded-lg border border-[#444]">
+                  <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">
+                    Current Theme Preview
+                  </div>
+                  <div className="flex items-center gap-2 mb-4">
+                    {/* Palette Row */}
+                    <div className="flex items-center gap-1.5 bg-[#111] p-1.5 rounded-full border border-[#333]">
+                      {[
+                        { color: theme.colors.primary, label: "Primary" },
+                        { color: theme.colors.background, label: "Background" },
+                        { color: theme.colors.foreground, label: "Foreground" },
+                        { color: theme.colors.accent || theme.colors.primary, label: "Accent" },
+                        { color: theme.colors.muted, label: "Muted" },
+                      ].map((swatch, i) => (
                         <div
-                          className="h-6 w-6 rounded-full border border-[#444] shadow-sm cursor-help transition-transform hover:scale-110"
-                          style={{ backgroundColor: swatch.color }}
-                        />
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-[10px] text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                          {swatch.label}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="h-px flex-1 bg-[#333]" />
-                </div>
-                <div className="text-xs text-gray-400">
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-gray-500">Font:</span>
-                    <span className="text-gray-300 truncate ml-2">{theme.fonts.sans.split(',')[0]}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-gray-500">Radius:</span>
-                    <span className="text-gray-300">{theme.radius.medium}</span>
-                  </div>
-                </div>
-              </div>
-
-              <Tabs defaultValue="colors" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-[#1E1E1E] text-gray-400 p-1 rounded-lg mb-6">
-                  <TabsTrigger
-                    value="colors"
-                    className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
-                  >
-                    Colors
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="typography"
-                    className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
-                  >
-                    Type
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="other"
-                    className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
-                  >
-                    Other
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="ux-principles"
-                    className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
-                  >
-                    UX
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* Colors Tab */}
-                <TabsContent value="colors" className="mt-0 space-y-3">
-                  <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-4">
-                    Color Palette
-                  </div>
-                  <Accordion type="multiple" defaultValue={["primary", "base"]} className="w-full space-y-2">
-                    {/* Primary Colors */}
-                    <AccordionItem value="primary" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                      <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                        Primary Colors
-                      </AccordionTrigger>
-                      <AccordionContent className="flex flex-col gap-4 pt-2 pb-4">
-                        <ColorPicker
-                          label="Primary"
-                          value={theme.colors.primary}
-                          onChange={(value) => handleColorChange("primary", value)}
-                        />
-                        {theme.colors.primaryForeground && (
-                          <ColorPicker
-                            label="Primary Foreground"
-                            value={theme.colors.primaryForeground}
-                            onChange={(value) => handleColorChange("primaryForeground", value)}
+                          key={i}
+                          className="group relative"
+                        >
+                          <div
+                            className="h-6 w-6 rounded-full border border-[#444] shadow-sm cursor-help transition-transform hover:scale-110"
+                            style={{ backgroundColor: swatch.color }}
                           />
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    {/* Secondary Colors */}
-                    {(theme.colors.secondary || theme.colors.secondaryForeground) && (
-                      <AccordionItem value="secondary" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                          Secondary Colors
-                        </AccordionTrigger>
-                        <AccordionContent className="space-y-4 pt-2 pb-4">
-                          {theme.colors.secondary && (
-                            <ColorPicker
-                              label="Secondary"
-                              value={theme.colors.secondary}
-                              onChange={(value) => handleColorChange("secondary", value)}
-                            />
-                          )}
-                          {theme.colors.secondaryForeground && (
-                            <ColorPicker
-                              label="Secondary Foreground"
-                              value={theme.colors.secondaryForeground}
-                              onChange={(value) => handleColorChange("secondaryForeground", value)}
-                            />
-                          )}
-                        </AccordionContent>
-                      </AccordionItem>
-                    )}
-
-                    {/* Accent Colors */}
-                    {(theme.colors.accent || theme.colors.accentForeground) && (
-                      <AccordionItem value="accent" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                          Accent Colors
-                        </AccordionTrigger>
-                        <AccordionContent className="space-y-4 pt-2 pb-4">
-                          {theme.colors.accent && (
-                            <ColorPicker
-                              label="Accent"
-                              value={theme.colors.accent}
-                              onChange={(value) => handleColorChange("accent", value)}
-                            />
-                          )}
-                          {theme.colors.accentForeground && (
-                            <ColorPicker
-                              label="Accent Foreground"
-                              value={theme.colors.accentForeground}
-                              onChange={(value) => handleColorChange("accentForeground", value)}
-                            />
-                          )}
-                        </AccordionContent>
-                      </AccordionItem>
-                    )}
-
-                    {/* Base Colors */}
-                    <AccordionItem value="base" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                      <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                        Base Colors
-                      </AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-2 pb-4">
-                        <ColorPicker
-                          label="Background"
-                          value={theme.colors.background}
-                          onChange={(value) => handleColorChange("background", value)}
-                        />
-                        <ColorPicker
-                          label="Foreground"
-                          value={theme.colors.foreground}
-                          onChange={(value) => handleColorChange("foreground", value)}
-                        />
-                        <ColorPicker
-                          label="Muted"
-                          value={theme.colors.muted}
-                          onChange={(value) => handleColorChange("muted", value)}
-                        />
-                        {theme.colors.mutedForeground && (
-                          <ColorPicker
-                            label="Muted Foreground"
-                            value={theme.colors.mutedForeground}
-                            onChange={(value) => handleColorChange("mutedForeground", value)}
-                          />
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    {/* Destructive Colors */}
-                    {(theme.colors.destructive || theme.colors.destructiveForeground) && (
-                      <AccordionItem value="destructive" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                          Destructive Colors
-                        </AccordionTrigger>
-                        <AccordionContent className="space-y-4 pt-2 pb-4">
-                          {theme.colors.destructive && (
-                            <ColorPicker
-                              label="Destructive"
-                              value={theme.colors.destructive}
-                              onChange={(value) => handleColorChange("destructive", value)}
-                            />
-                          )}
-                          {theme.colors.destructiveForeground && (
-                            <ColorPicker
-                              label="Destructive Foreground"
-                              value={theme.colors.destructiveForeground}
-                              onChange={(value) => handleColorChange("destructiveForeground", value)}
-                            />
-                          )}
-                        </AccordionContent>
-                      </AccordionItem>
-                    )}
-
-                    {/* Border and Input Colors */}
-                    <AccordionItem value="border-input" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                      <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                        Border & Input
-                      </AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-2 pb-4">
-                        <ColorPicker
-                          label="Border"
-                          value={theme.colors.border}
-                          onChange={(value) => handleColorChange("border", value)}
-                        />
-                        <ColorPicker
-                          label="Input"
-                          value={theme.colors.input}
-                          onChange={(value) => handleColorChange("input", value)}
-                        />
-                        <ColorPicker
-                          label="Ring (Focus)"
-                          value={theme.colors.ring}
-                          onChange={(value) => handleColorChange("ring", value)}
-                        />
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </TabsContent>
-
-                {/* Typography Tab */}
-                <TabsContent value="typography" className="mt-0 space-y-3">
-                  <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-4">
-                    Typography System
-                  </div>
-                  <Accordion type="multiple" defaultValue={["font-family", "font-sizes"]} className="w-full space-y-2">
-                    <AccordionItem value="font-family" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                      <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                        Font Families
-                      </AccordionTrigger>
-                      <AccordionContent className="flex flex-col gap-4 pt-2 pb-4">
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">Sans Serif</Label>
-                          <Input
-                            value={theme.fonts.sans}
-                            onChange={(e) => handleFontsChange("sans", e.target.value)}
-                            placeholder="Inter, system-ui, sans-serif"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                          <p className="text-xs text-gray-500 leading-relaxed">Primary font for UI and body text</p>
-                        </div>
-
-                        {theme.fonts.heading && (
-                          <div className="space-y-2">
-                            <Label className="text-gray-300 text-xs font-medium">Heading Font</Label>
-                            <Input
-                              value={theme.fonts.heading}
-                              onChange={(e) => handleFontsChange("heading", e.target.value)}
-                              placeholder="Playfair Display, serif"
-                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                            />
-                            <p className="text-xs text-gray-500 leading-relaxed">Distinct font for headings</p>
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-[10px] text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                            {swatch.label}
                           </div>
-                        )}
-
-                        {theme.fonts.secondary && (
-                          <div className="space-y-2">
-                            <Label className="text-gray-300 text-xs font-medium">Secondary Font</Label>
-                            <Input
-                              value={theme.fonts.secondary}
-                              onChange={(e) => handleFontsChange("secondary", e.target.value)}
-                              placeholder="Open Sans, sans-serif"
-                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                            />
-                            <p className="text-xs text-gray-500 leading-relaxed">Alternative font for special elements</p>
-                          </div>
-                        )}
-
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">Serif</Label>
-                          <Input
-                            value={theme.fonts.serif}
-                            onChange={(e) => handleFontsChange("serif", e.target.value)}
-                            placeholder="Georgia, serif"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
                         </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">Monospace</Label>
-                          <Input
-                            value={theme.fonts.mono}
-                            onChange={(e) => handleFontsChange("mono", e.target.value)}
-                            placeholder="Menlo, Monaco, Courier, monospace"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem value="font-sizes" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                      <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                        Font Sizes
-                      </AccordionTrigger>
-                      <AccordionContent className="flex flex-col gap-4 pt-2 pb-4">
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">Body Size</Label>
-                          <Input
-                            value={theme.fonts.sizes.body}
-                            onChange={(e) => handleFontSizeChange("body", e.target.value)}
-                            placeholder="16px"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">H1 Size</Label>
-                          <Input
-                            value={theme.fonts.sizes.heading[0] || "48px"}
-                            onChange={(e) => {
-                              const newHeadings = [...theme.fonts.sizes.heading]
-                              newHeadings[0] = e.target.value
-                              handleFontSizeChange("heading", newHeadings)
-                            }}
-                            placeholder="48px"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">H2 Size</Label>
-                          <Input
-                            value={theme.fonts.sizes.heading[1] || "36px"}
-                            onChange={(e) => {
-                              const newHeadings = [...theme.fonts.sizes.heading]
-                              newHeadings[1] = e.target.value
-                              handleFontSizeChange("heading", newHeadings)
-                            }}
-                            placeholder="36px"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">H3 Size</Label>
-                          <Input
-                            value={theme.fonts.sizes.heading[2] || "24px"}
-                            onChange={(e) => {
-                              const newHeadings = [...theme.fonts.sizes.heading]
-                              newHeadings[2] = e.target.value
-                              handleFontSizeChange("heading", newHeadings)
-                            }}
-                            placeholder="24px"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">Caption Size</Label>
-                          <Input
-                            value={theme.fonts.sizes.caption}
-                            onChange={(e) => handleFontSizeChange("caption", e.target.value)}
-                            placeholder="14px"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    {theme.fonts.weights && (
-                      <AccordionItem value="font-weights" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                          Font Weights
-                        </AccordionTrigger>
-                        <AccordionContent className="flex flex-col gap-2 pt-2 pb-4">
-                          <div className="text-xs text-gray-400 mb-2">
-                            Detected from scraped website
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-300">Normal</span>
-                            <span className="text-gray-500">{theme.fonts.weights.normal}</span>
-                          </div>
-                          {theme.fonts.weights.medium && (
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-300">Medium</span>
-                              <span className="text-gray-500">{theme.fonts.weights.medium}</span>
-                            </div>
-                          )}
-                          {theme.fonts.weights.semibold && (
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-300">Semibold</span>
-                              <span className="text-gray-500">{theme.fonts.weights.semibold}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-300">Bold</span>
-                            <span className="text-gray-500">{theme.fonts.weights.bold}</span>
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    )}
-
-                  </Accordion>
-                </TabsContent>
-
-                {/* Other Tab */}
-                <TabsContent value="other" className="mt-0 space-y-3">
-                  <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-4">
-                    Styling Properties
-                  </div>
-                  <Accordion type="multiple" defaultValue={["radius", "spacing"]} className="w-full space-y-2">
-                    <AccordionItem value="radius" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                      <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                        Border Radius
-                      </AccordionTrigger>
-                      <AccordionContent className="flex flex-col gap-4 pt-2 pb-4">
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">Small Radius</Label>
-                          <Input
-                            value={theme.radius.small}
-                            onChange={(e) => updateTheme({ radius: { ...theme.radius, small: e.target.value } })}
-                            placeholder="4px"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">Medium Radius</Label>
-                          <Input
-                            value={theme.radius.medium}
-                            onChange={(e) => updateTheme({ radius: { ...theme.radius, medium: e.target.value } })}
-                            placeholder="8px"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">Large Radius</Label>
-                          <Input
-                            value={theme.radius.large}
-                            onChange={(e) => updateTheme({ radius: { ...theme.radius, large: e.target.value } })}
-                            placeholder="16px"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem value="spacing" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                      <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                        Spacing
-                      </AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-2 pb-4">
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">Base Spacing</Label>
-                          <Input
-                            value={theme.spacing.base}
-                            onChange={(e) => updateTheme({ spacing: { base: e.target.value } })}
-                            placeholder="4px"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                          <p className="text-xs text-gray-500 leading-relaxed">
-                            Base unit for spacing (e.g., 4px, 8px)
-                          </p>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem value="shadow" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
-                      <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
-                        Shadows
-                      </AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-2 pb-4">
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">Base Shadow</Label>
-                          <Input
-                            value={theme.shadows.base}
-                            onChange={(e) => updateTheme({ shadows: { ...theme.shadows, base: e.target.value } })}
-                            placeholder="0 1px 3px 0 rgb(0 0 0 / 0.1)"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                          <p className="text-xs text-gray-500 leading-relaxed">
-                            Small shadow for subtle elevation
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-gray-300 text-xs font-medium">Large Shadow</Label>
-                          <Input
-                            value={theme.shadows.large}
-                            onChange={(e) => updateTheme({ shadows: { ...theme.shadows, large: e.target.value } })}
-                            placeholder="0 10px 15px -3px rgb(0 0 0 / 0.1)"
-                            className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
-                          />
-                          <p className="text-xs text-gray-500 leading-relaxed">
-                            Large shadow for high elevation elements
-                          </p>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </TabsContent>
-
-                {/* UX Principles Tab */}
-                <TabsContent value="ux-principles" className="mt-0 space-y-6">
-                  {/* Interaction & Touch Targets */}
-                  <div className="space-y-4">
-                    <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                      Interaction & Touch Targets
+                      ))}
                     </div>
+                    <div className="h-px flex-1 bg-[#333]" />
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-gray-500">Font:</span>
+                      <span className="text-gray-300 truncate ml-2">{theme.fonts.sans.split(',')[0]}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-gray-500">Radius:</span>
+                      <span className="text-gray-300">{theme.radius.medium}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <Tabs defaultValue="colors" className="w-full">
+                  <TabsList className="grid w-full grid-cols-4 bg-[#1E1E1E] text-gray-400 p-1 rounded-lg mb-6">
+                    <TabsTrigger
+                      value="colors"
+                      className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
+                    >
+                      Colors
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="typography"
+                      className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
+                    >
+                      Type
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="other"
+                      className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
+                    >
+                      Other
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="ux-principles"
+                      className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
+                    >
+                      UX
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Colors Tab */}
+                  <TabsContent value="colors" className="mt-0 space-y-3">
+                    <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-4">
+                      Color Palette
+                    </div>
+                    <Accordion type="multiple" defaultValue={["primary", "base"]} className="w-full space-y-2">
+                      {/* Primary Colors */}
+                      <AccordionItem value="primary" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                          Primary Colors
+                        </AccordionTrigger>
+                        <AccordionContent className="flex flex-col gap-4 pt-2 pb-4">
+                          <ColorPicker
+                            label="Primary"
+                            value={theme.colors.primary}
+                            onChange={(value) => handleColorChange("primary", value)}
+                          />
+                          {theme.colors.primaryForeground && (
+                            <ColorPicker
+                              label="Primary Foreground"
+                              value={theme.colors.primaryForeground}
+                              onChange={(value) => handleColorChange("primaryForeground", value)}
+                            />
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      {/* Secondary Colors */}
+                      {(theme.colors.secondary || theme.colors.secondaryForeground) && (
+                        <AccordionItem value="secondary" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                          <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                            Secondary Colors
+                          </AccordionTrigger>
+                          <AccordionContent className="space-y-4 pt-2 pb-4">
+                            {theme.colors.secondary && (
+                              <ColorPicker
+                                label="Secondary"
+                                value={theme.colors.secondary}
+                                onChange={(value) => handleColorChange("secondary", value)}
+                              />
+                            )}
+                            {theme.colors.secondaryForeground && (
+                              <ColorPicker
+                                label="Secondary Foreground"
+                                value={theme.colors.secondaryForeground}
+                                onChange={(value) => handleColorChange("secondaryForeground", value)}
+                              />
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+                      )}
+
+                      {/* Accent Colors */}
+                      {(theme.colors.accent || theme.colors.accentForeground) && (
+                        <AccordionItem value="accent" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                          <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                            Accent Colors
+                          </AccordionTrigger>
+                          <AccordionContent className="space-y-4 pt-2 pb-4">
+                            {theme.colors.accent && (
+                              <ColorPicker
+                                label="Accent"
+                                value={theme.colors.accent}
+                                onChange={(value) => handleColorChange("accent", value)}
+                              />
+                            )}
+                            {theme.colors.accentForeground && (
+                              <ColorPicker
+                                label="Accent Foreground"
+                                value={theme.colors.accentForeground}
+                                onChange={(value) => handleColorChange("accentForeground", value)}
+                              />
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+                      )}
+
+                      {/* Base Colors */}
+                      <AccordionItem value="base" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                          Base Colors
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2 pb-4">
+                          <ColorPicker
+                            label="Background"
+                            value={theme.colors.background}
+                            onChange={(value) => handleColorChange("background", value)}
+                          />
+                          <ColorPicker
+                            label="Foreground"
+                            value={theme.colors.foreground}
+                            onChange={(value) => handleColorChange("foreground", value)}
+                          />
+                          <ColorPicker
+                            label="Muted"
+                            value={theme.colors.muted}
+                            onChange={(value) => handleColorChange("muted", value)}
+                          />
+                          {theme.colors.mutedForeground && (
+                            <ColorPicker
+                              label="Muted Foreground"
+                              value={theme.colors.mutedForeground}
+                              onChange={(value) => handleColorChange("mutedForeground", value)}
+                            />
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      {/* Destructive Colors */}
+                      {(theme.colors.destructive || theme.colors.destructiveForeground) && (
+                        <AccordionItem value="destructive" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                          <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                            Destructive Colors
+                          </AccordionTrigger>
+                          <AccordionContent className="space-y-4 pt-2 pb-4">
+                            {theme.colors.destructive && (
+                              <ColorPicker
+                                label="Destructive"
+                                value={theme.colors.destructive}
+                                onChange={(value) => handleColorChange("destructive", value)}
+                              />
+                            )}
+                            {theme.colors.destructiveForeground && (
+                              <ColorPicker
+                                label="Destructive Foreground"
+                                value={theme.colors.destructiveForeground}
+                                onChange={(value) => handleColorChange("destructiveForeground", value)}
+                              />
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+                      )}
+
+                      {/* Border and Input Colors */}
+                      <AccordionItem value="border-input" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                          Border & Input
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2 pb-4">
+                          <ColorPicker
+                            label="Border"
+                            value={theme.colors.border}
+                            onChange={(value) => handleColorChange("border", value)}
+                          />
+                          <ColorPicker
+                            label="Input"
+                            value={theme.colors.input}
+                            onChange={(value) => handleColorChange("input", value)}
+                          />
+                          <ColorPicker
+                            label="Ring (Focus)"
+                            value={theme.colors.ring}
+                            onChange={(value) => handleColorChange("ring", value)}
+                          />
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </TabsContent>
+
+                  {/* Typography Tab */}
+                  <TabsContent value="typography" className="mt-0 space-y-3">
+                    <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-4">
+                      Typography System
+                    </div>
+                    <Accordion type="multiple" defaultValue={["font-family", "font-sizes"]} className="w-full space-y-2">
+                      <AccordionItem value="font-family" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                          Font Families
+                        </AccordionTrigger>
+                        <AccordionContent className="flex flex-col gap-4 pt-2 pb-4">
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">Sans Serif</Label>
+                            <Input
+                              value={theme.fonts.sans}
+                              onChange={(e) => handleFontsChange("sans", e.target.value)}
+                              placeholder="Inter, system-ui, sans-serif"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                            <p className="text-xs text-gray-500 leading-relaxed">Primary font for UI and body text</p>
+                          </div>
+
+                          {theme.fonts.heading && (
+                            <div className="space-y-2">
+                              <Label className="text-gray-300 text-xs font-medium">Heading Font</Label>
+                              <Input
+                                value={theme.fonts.heading}
+                                onChange={(e) => handleFontsChange("heading", e.target.value)}
+                                placeholder="Playfair Display, serif"
+                                className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                              />
+                              <p className="text-xs text-gray-500 leading-relaxed">Distinct font for headings</p>
+                            </div>
+                          )}
+
+                          {theme.fonts.secondary && (
+                            <div className="space-y-2">
+                              <Label className="text-gray-300 text-xs font-medium">Secondary Font</Label>
+                              <Input
+                                value={theme.fonts.secondary}
+                                onChange={(e) => handleFontsChange("secondary", e.target.value)}
+                                placeholder="Open Sans, sans-serif"
+                                className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                              />
+                              <p className="text-xs text-gray-500 leading-relaxed">Alternative font for special elements</p>
+                            </div>
+                          )}
+
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">Serif</Label>
+                            <Input
+                              value={theme.fonts.serif}
+                              onChange={(e) => handleFontsChange("serif", e.target.value)}
+                              placeholder="Georgia, serif"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">Monospace</Label>
+                            <Input
+                              value={theme.fonts.mono}
+                              onChange={(e) => handleFontsChange("mono", e.target.value)}
+                              placeholder="Menlo, Monaco, Courier, monospace"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      <AccordionItem value="font-sizes" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                          Font Sizes
+                        </AccordionTrigger>
+                        <AccordionContent className="flex flex-col gap-4 pt-2 pb-4">
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">Body Size</Label>
+                            <Input
+                              value={theme.fonts.sizes.body}
+                              onChange={(e) => handleFontSizeChange("body", e.target.value)}
+                              placeholder="16px"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">H1 Size</Label>
+                            <Input
+                              value={theme.fonts.sizes.heading[0] || "48px"}
+                              onChange={(e) => {
+                                const newHeadings = [...theme.fonts.sizes.heading]
+                                newHeadings[0] = e.target.value
+                                handleFontSizeChange("heading", newHeadings)
+                              }}
+                              placeholder="48px"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">H2 Size</Label>
+                            <Input
+                              value={theme.fonts.sizes.heading[1] || "36px"}
+                              onChange={(e) => {
+                                const newHeadings = [...theme.fonts.sizes.heading]
+                                newHeadings[1] = e.target.value
+                                handleFontSizeChange("heading", newHeadings)
+                              }}
+                              placeholder="36px"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">H3 Size</Label>
+                            <Input
+                              value={theme.fonts.sizes.heading[2] || "24px"}
+                              onChange={(e) => {
+                                const newHeadings = [...theme.fonts.sizes.heading]
+                                newHeadings[2] = e.target.value
+                                handleFontSizeChange("heading", newHeadings)
+                              }}
+                              placeholder="24px"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">Caption Size</Label>
+                            <Input
+                              value={theme.fonts.sizes.caption}
+                              onChange={(e) => handleFontSizeChange("caption", e.target.value)}
+                              placeholder="14px"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      {theme.fonts.weights && (
+                        <AccordionItem value="font-weights" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                          <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                            Font Weights
+                          </AccordionTrigger>
+                          <AccordionContent className="flex flex-col gap-2 pt-2 pb-4">
+                            <div className="text-xs text-gray-400 mb-2">
+                              Detected from scraped website
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-300">Normal</span>
+                              <span className="text-gray-500">{theme.fonts.weights.normal}</span>
+                            </div>
+                            {theme.fonts.weights.medium && (
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-300">Medium</span>
+                                <span className="text-gray-500">{theme.fonts.weights.medium}</span>
+                              </div>
+                            )}
+                            {theme.fonts.weights.semibold && (
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-300">Semibold</span>
+                                <span className="text-gray-500">{theme.fonts.weights.semibold}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-300">Bold</span>
+                              <span className="text-gray-500">{theme.fonts.weights.bold}</span>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      )}
+
+                    </Accordion>
+                  </TabsContent>
+
+                  {/* Other Tab */}
+                  <TabsContent value="other" className="mt-0 space-y-3">
+                    <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-4">
+                      Styling Properties
+                    </div>
+                    <Accordion type="multiple" defaultValue={["radius", "spacing"]} className="w-full space-y-2">
+                      <AccordionItem value="radius" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                          Border Radius
+                        </AccordionTrigger>
+                        <AccordionContent className="flex flex-col gap-4 pt-2 pb-4">
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">Small Radius</Label>
+                            <Input
+                              value={theme.radius.small}
+                              onChange={(e) => updateTheme({ radius: { ...theme.radius, small: e.target.value } })}
+                              placeholder="4px"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">Medium Radius</Label>
+                            <Input
+                              value={theme.radius.medium}
+                              onChange={(e) => updateTheme({ radius: { ...theme.radius, medium: e.target.value } })}
+                              placeholder="8px"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">Large Radius</Label>
+                            <Input
+                              value={theme.radius.large}
+                              onChange={(e) => updateTheme({ radius: { ...theme.radius, large: e.target.value } })}
+                              placeholder="16px"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      <AccordionItem value="spacing" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                          Spacing
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2 pb-4">
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">Base Spacing</Label>
+                            <Input
+                              value={theme.spacing.base}
+                              onChange={(e) => updateTheme({ spacing: { base: e.target.value } })}
+                              placeholder="4px"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                              Base unit for spacing (e.g., 4px, 8px)
+                            </p>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      <AccordionItem value="shadow" className="border-[#444] bg-[#1E1E1E] rounded-lg px-4 border">
+                        <AccordionTrigger className="hover:no-underline hover:text-gray-200 py-3 text-sm font-medium">
+                          Shadows
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2 pb-4">
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">Base Shadow</Label>
+                            <Input
+                              value={theme.shadows.base}
+                              onChange={(e) => updateTheme({ shadows: { ...theme.shadows, base: e.target.value } })}
+                              placeholder="0 1px 3px 0 rgb(0 0 0 / 0.1)"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                              Small shadow for subtle elevation
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-gray-300 text-xs font-medium">Large Shadow</Label>
+                            <Input
+                              value={theme.shadows.large}
+                              onChange={(e) => updateTheme({ shadows: { ...theme.shadows, large: e.target.value } })}
+                              placeholder="0 10px 15px -3px rgb(0 0 0 / 0.1)"
+                              className="bg-[#0F0F0F] border-[#444] text-white hover:border-[#555] focus:border-primary transition-colors h-9 text-sm"
+                            />
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                              Large shadow for high elevation elements
+                            </p>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </TabsContent>
+
+                  {/* UX Principles Tab */}
+                  <TabsContent value="ux-principles" className="mt-0 space-y-6">
+                    {/* Interaction & Touch Targets */}
                     <div className="space-y-4">
-                      <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
-                          <Label className="text-gray-300 text-sm font-medium">Enforce Minimum Touch Target (44px)</Label>
-                          <p className="text-xs text-gray-500 leading-relaxed">Ensures all clickable elements meet accessibility size guidelines.</p>
+                      <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                        Interaction & Touch Targets
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                            <Label className="text-gray-300 text-sm font-medium">Enforce Minimum Touch Target (44px)</Label>
+                            <p className="text-xs text-gray-500 leading-relaxed">Ensures all clickable elements meet accessibility size guidelines.</p>
+                          </div>
+                          <Switch
+                            checked={uxSettings.touchTarget}
+                            onCheckedChange={(checked) => setUxSettings({ ...uxSettings, touchTarget: checked })}
+                            className="shrink-0 data-[state=checked]:bg-primary"
+                          />
                         </div>
-                        <Switch
-                          checked={uxSettings.touchTarget}
-                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, touchTarget: checked })}
-                          className="shrink-0 data-[state=checked]:bg-primary"
-                        />
-                      </div>
-                      <div className="space-y-2 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <Label className="text-gray-300 text-sm font-medium">Interactive Element Padding</Label>
-                        <p className="text-xs text-gray-500 mb-3 leading-relaxed">Adds horizontal & vertical padding to interactive components.</p>
-                        <RadioGroup
-                          value={uxSettings.interactivePadding}
-                          onValueChange={(value) => setUxSettings({ ...uxSettings, interactivePadding: value as "small" | "medium" | "large" })}
-                          className="flex flex-col gap-2"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="small" id="padding-small" />
-                            <Label htmlFor="padding-small" className="text-sm text-gray-300 cursor-pointer">Small (8px)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="medium" id="padding-medium" />
-                            <Label htmlFor="padding-medium" className="text-sm text-gray-300 cursor-pointer">Medium (12px)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="large" id="padding-large" />
-                            <Label htmlFor="padding-large" className="text-sm text-gray-300 cursor-pointer">Large (16px)</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator className="bg-[#444]" />
-
-                  {/* Accessibility */}
-                  <div className="space-y-4">
-                    <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                      Accessibility
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
-                          <Label className="text-gray-300 text-sm font-medium">Enforce WCAG AA Contrast</Label>
-                          <p className="text-xs text-gray-500 leading-relaxed">Automatically adjusts color contrast to meet AA standards.</p>
+                        <div className="space-y-2 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <Label className="text-gray-300 text-sm font-medium">Interactive Element Padding</Label>
+                          <p className="text-xs text-gray-500 mb-3 leading-relaxed">Adds horizontal & vertical padding to interactive components.</p>
+                          <RadioGroup
+                            value={uxSettings.interactivePadding}
+                            onValueChange={(value) => setUxSettings({ ...uxSettings, interactivePadding: value as "small" | "medium" | "large" })}
+                            className="flex flex-col gap-2"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="small" id="padding-small" />
+                              <Label htmlFor="padding-small" className="text-sm text-gray-300 cursor-pointer">Small (8px)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="medium" id="padding-medium" />
+                              <Label htmlFor="padding-medium" className="text-sm text-gray-300 cursor-pointer">Medium (12px)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="large" id="padding-large" />
+                              <Label htmlFor="padding-large" className="text-sm text-gray-300 cursor-pointer">Large (16px)</Label>
+                            </div>
+                          </RadioGroup>
                         </div>
-                        <Switch
-                          checked={uxSettings.enforceContrast}
-                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, enforceContrast: checked })}
-                          className="shrink-0 data-[state=checked]:bg-primary"
-                        />
-                      </div>
-                      <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
-                          <Label className="text-gray-300 text-sm font-medium">Enable Visible Focus Rings</Label>
-                          <p className="text-xs text-gray-500 leading-relaxed">Improves keyboard navigation visibility.</p>
-                        </div>
-                        <Switch
-                          checked={uxSettings.focusRings}
-                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, focusRings: checked })}
-                          className="shrink-0 data-[state=checked]:bg-primary"
-                        />
-                      </div>
-                      <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
-                          <Label className="text-gray-300 text-sm font-medium">Reduce Motion / Animations</Label>
-                          <p className="text-xs text-gray-500 leading-relaxed">Replaces motion-heavy transitions with subtle fades.</p>
-                        </div>
-                        <Switch
-                          checked={uxSettings.reducedMotion}
-                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, reducedMotion: checked })}
-                          className="shrink-0 data-[state=checked]:bg-primary"
-                        />
                       </div>
                     </div>
-                  </div>
 
-                  <Separator className="bg-[#444]" />
+                    <Separator className="bg-[#444]" />
 
-                  {/* Density & Spacing */}
-                  <div className="space-y-4">
-                    <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                      Density & Spacing
-                    </div>
-                    <div className="space-y-3">
-                      <div className="space-y-2 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <Label className="text-gray-300 text-sm font-medium">Layout Density</Label>
-                        <p className="text-xs text-gray-500 mb-3 leading-relaxed">Controls layout spacing for content-heavy or airy designs.</p>
-                        <RadioGroup
-                          value={uxSettings.density}
-                          onValueChange={(value) => setUxSettings({ ...uxSettings, density: value as "compact" | "cozy" | "spacious" })}
-                          className="flex flex-col gap-2"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="compact" id="density-compact" />
-                            <Label htmlFor="density-compact" className="text-sm text-gray-300 cursor-pointer">Compact</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="cozy" id="density-cozy" />
-                            <Label htmlFor="density-cozy" className="text-sm text-gray-300 cursor-pointer">Cozy</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="spacious" id="density-spacious" />
-                            <Label htmlFor="density-spacious" className="text-sm text-gray-300 cursor-pointer">Spacious</Label>
-                          </div>
-                        </RadioGroup>
+                    {/* Accessibility */}
+                    <div className="space-y-4">
+                      <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                        Accessibility
                       </div>
-                      <div className="space-y-2 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <Label className="text-gray-300 text-sm font-medium">Form Field Spacing</Label>
-                        <p className="text-xs text-gray-500 mb-3 leading-relaxed">Adjust vertical spacing between form inputs.</p>
-                        <RadioGroup
-                          value={uxSettings.formSpacing}
-                          onValueChange={(value) => setUxSettings({ ...uxSettings, formSpacing: value as "tight" | "default" | "wide" })}
-                          className="flex flex-col gap-2"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="tight" id="form-tight" />
-                            <Label htmlFor="form-tight" className="text-sm text-gray-300 cursor-pointer">Tight (12px)</Label>
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                            <Label className="text-gray-300 text-sm font-medium">Enforce WCAG AA Contrast</Label>
+                            <p className="text-xs text-gray-500 leading-relaxed">Automatically adjusts color contrast to meet AA standards.</p>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="default" id="form-default" />
-                            <Label htmlFor="form-default" className="text-sm text-gray-300 cursor-pointer">Default (20px)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="wide" id="form-wide" />
-                            <Label htmlFor="form-wide" className="text-sm text-gray-300 cursor-pointer">Wide (32px)</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator className="bg-[#444]" />
-
-                  {/* Feedback & States */}
-                  <div className="space-y-4">
-                    <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                      Feedback & States
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
-                          <Label className="text-gray-300 text-sm font-medium">High-Visibility Error States</Label>
-                          <p className="text-xs text-gray-500 leading-relaxed">Use stronger colors + icons for errors.</p>
+                          <Switch
+                            checked={uxSettings.enforceContrast}
+                            onCheckedChange={(checked) => setUxSettings({ ...uxSettings, enforceContrast: checked })}
+                            className="shrink-0 data-[state=checked]:bg-primary"
+                          />
                         </div>
-                        <Switch
-                          checked={uxSettings.strongErrors}
-                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, strongErrors: checked })}
-                          className="shrink-0 data-[state=checked]:bg-primary"
-                        />
-                      </div>
-                      <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
-                          <Label className="text-gray-300 text-sm font-medium">Strengthen Hover & Active States</Label>
-                          <p className="text-xs text-gray-500 leading-relaxed">Makes interactive elements feel more alive and clear.</p>
+                        <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                            <Label className="text-gray-300 text-sm font-medium">Enable Visible Focus Rings</Label>
+                            <p className="text-xs text-gray-500 leading-relaxed">Improves keyboard navigation visibility.</p>
+                          </div>
+                          <Switch
+                            checked={uxSettings.focusRings}
+                            onCheckedChange={(checked) => setUxSettings({ ...uxSettings, focusRings: checked })}
+                            className="shrink-0 data-[state=checked]:bg-primary"
+                          />
                         </div>
-                        <Switch
-                          checked={uxSettings.strongHover}
-                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, strongHover: checked })}
-                          className="shrink-0 data-[state=checked]:bg-primary"
-                        />
-                      </div>
-                      <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
-                          <Label className="text-gray-300 text-sm font-medium">Show Validation Messages by Default</Label>
-                          <p className="text-xs text-gray-500 leading-relaxed">Show form feedback without requiring blur or submit.</p>
+                        <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                            <Label className="text-gray-300 text-sm font-medium">Reduce Motion / Animations</Label>
+                            <p className="text-xs text-gray-500 leading-relaxed">Replaces motion-heavy transitions with subtle fades.</p>
+                          </div>
+                          <Switch
+                            checked={uxSettings.reducedMotion}
+                            onCheckedChange={(checked) => setUxSettings({ ...uxSettings, reducedMotion: checked })}
+                            className="shrink-0 data-[state=checked]:bg-primary"
+                          />
                         </div>
-                        <Switch
-                          checked={uxSettings.autoValidationMessages}
-                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, autoValidationMessages: checked })}
-                          className="shrink-0 data-[state=checked]:bg-primary"
-                        />
                       </div>
                     </div>
-                  </div>
 
-                  <Separator className="bg-[#444]" />
+                    <Separator className="bg-[#444]" />
 
-                  {/* Readability */}
-                  <div className="space-y-4">
-                    <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                      Readability
-                    </div>
-                    <div className="space-y-3">
-                      <div className="space-y-2 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <Label className="text-gray-300 text-sm font-medium">Line Height</Label>
-                        <p className="text-xs text-gray-500 mb-3 leading-relaxed">Adjust spacing between lines of text for better readability.</p>
-                        <RadioGroup
-                          value={uxSettings.lineHeight}
-                          onValueChange={(value) => setUxSettings({ ...uxSettings, lineHeight: value as "normal" | "relaxed" | "loose" })}
-                          className="flex flex-col gap-2"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="normal" id="line-normal" />
-                            <Label htmlFor="line-normal" className="text-sm text-gray-300 cursor-pointer">Normal (1.5)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="relaxed" id="line-relaxed" />
-                            <Label htmlFor="line-relaxed" className="text-sm text-gray-300 cursor-pointer">Relaxed (1.625)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="loose" id="line-loose" />
-                            <Label htmlFor="line-loose" className="text-sm text-gray-300 cursor-pointer">Loose (2)</Label>
-                          </div>
-                        </RadioGroup>
+                    {/* Density & Spacing */}
+                    <div className="space-y-4">
+                      <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                        Density & Spacing
                       </div>
-                      <div className="space-y-2 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <Label className="text-gray-300 text-sm font-medium">Base Font Size</Label>
-                        <p className="text-xs text-gray-500 mb-3 leading-relaxed">Increase default text size for better legibility.</p>
-                        <RadioGroup
-                          value={uxSettings.bodyFontSize}
-                          onValueChange={(value) => setUxSettings({ ...uxSettings, bodyFontSize: value as "small" | "medium" | "large" })}
-                          className="flex flex-col gap-2"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="small" id="font-small" />
-                            <Label htmlFor="font-small" className="text-sm text-gray-300 cursor-pointer">Small (14px)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="medium" id="font-medium" />
-                            <Label htmlFor="font-medium" className="text-sm text-gray-300 cursor-pointer">Medium (16px)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="large" id="font-large" />
-                            <Label htmlFor="font-large" className="text-sm text-gray-300 cursor-pointer">Large (18px)</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                      <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
-                        <div className="space-y-0.5 flex-1 min-w-0 pr-2">
-                          <Label className="text-gray-300 text-sm font-medium">Consistent Section Headings</Label>
-                          <p className="text-xs text-gray-500 leading-relaxed">Improves hierarchy for long pages.</p>
+                      <div className="space-y-3">
+                        <div className="space-y-2 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <Label className="text-gray-300 text-sm font-medium">Layout Density</Label>
+                          <p className="text-xs text-gray-500 mb-3 leading-relaxed">Controls layout spacing for content-heavy or airy designs.</p>
+                          <RadioGroup
+                            value={uxSettings.density}
+                            onValueChange={(value) => setUxSettings({ ...uxSettings, density: value as "compact" | "cozy" | "spacious" })}
+                            className="flex flex-col gap-2"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="compact" id="density-compact" />
+                              <Label htmlFor="density-compact" className="text-sm text-gray-300 cursor-pointer">Compact</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="cozy" id="density-cozy" />
+                              <Label htmlFor="density-cozy" className="text-sm text-gray-300 cursor-pointer">Cozy</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="spacious" id="density-spacious" />
+                              <Label htmlFor="density-spacious" className="text-sm text-gray-300 cursor-pointer">Spacious</Label>
+                            </div>
+                          </RadioGroup>
                         </div>
-                        <Switch
-                          checked={uxSettings.headingsEnabled}
-                          onCheckedChange={(checked) => setUxSettings({ ...uxSettings, headingsEnabled: checked })}
-                          className="shrink-0 data-[state=checked]:bg-primary"
-                        />
+                        <div className="space-y-2 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <Label className="text-gray-300 text-sm font-medium">Form Field Spacing</Label>
+                          <p className="text-xs text-gray-500 mb-3 leading-relaxed">Adjust vertical spacing between form inputs.</p>
+                          <RadioGroup
+                            value={uxSettings.formSpacing}
+                            onValueChange={(value) => setUxSettings({ ...uxSettings, formSpacing: value as "tight" | "default" | "wide" })}
+                            className="flex flex-col gap-2"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="tight" id="form-tight" />
+                              <Label htmlFor="form-tight" className="text-sm text-gray-300 cursor-pointer">Tight (12px)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="default" id="form-default" />
+                              <Label htmlFor="form-default" className="text-sm text-gray-300 cursor-pointer">Default (20px)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="wide" id="form-wide" />
+                              <Label htmlFor="form-wide" className="text-sm text-gray-300 cursor-pointer">Wide (32px)</Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
+
+                    <Separator className="bg-[#444]" />
+
+                    {/* Feedback & States */}
+                    <div className="space-y-4">
+                      <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                        Feedback & States
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                            <Label className="text-gray-300 text-sm font-medium">High-Visibility Error States</Label>
+                            <p className="text-xs text-gray-500 leading-relaxed">Use stronger colors + icons for errors.</p>
+                          </div>
+                          <Switch
+                            checked={uxSettings.strongErrors}
+                            onCheckedChange={(checked) => setUxSettings({ ...uxSettings, strongErrors: checked })}
+                            className="shrink-0 data-[state=checked]:bg-primary"
+                          />
+                        </div>
+                        <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                            <Label className="text-gray-300 text-sm font-medium">Strengthen Hover & Active States</Label>
+                            <p className="text-xs text-gray-500 leading-relaxed">Makes interactive elements feel more alive and clear.</p>
+                          </div>
+                          <Switch
+                            checked={uxSettings.strongHover}
+                            onCheckedChange={(checked) => setUxSettings({ ...uxSettings, strongHover: checked })}
+                            className="shrink-0 data-[state=checked]:bg-primary"
+                          />
+                        </div>
+                        <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                            <Label className="text-gray-300 text-sm font-medium">Show Validation Messages by Default</Label>
+                            <p className="text-xs text-gray-500 leading-relaxed">Show form feedback without requiring blur or submit.</p>
+                          </div>
+                          <Switch
+                            checked={uxSettings.autoValidationMessages}
+                            onCheckedChange={(checked) => setUxSettings({ ...uxSettings, autoValidationMessages: checked })}
+                            className="shrink-0 data-[state=checked]:bg-primary"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator className="bg-[#444]" />
+
+                    {/* Readability */}
+                    <div className="space-y-4">
+                      <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                        Readability
+                      </div>
+                      <div className="space-y-3">
+                        <div className="space-y-2 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <Label className="text-gray-300 text-sm font-medium">Line Height</Label>
+                          <p className="text-xs text-gray-500 mb-3 leading-relaxed">Adjust spacing between lines of text for better readability.</p>
+                          <RadioGroup
+                            value={uxSettings.lineHeight}
+                            onValueChange={(value) => setUxSettings({ ...uxSettings, lineHeight: value as "normal" | "relaxed" | "loose" })}
+                            className="flex flex-col gap-2"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="normal" id="line-normal" />
+                              <Label htmlFor="line-normal" className="text-sm text-gray-300 cursor-pointer">Normal (1.5)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="relaxed" id="line-relaxed" />
+                              <Label htmlFor="line-relaxed" className="text-sm text-gray-300 cursor-pointer">Relaxed (1.625)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="loose" id="line-loose" />
+                              <Label htmlFor="line-loose" className="text-sm text-gray-300 cursor-pointer">Loose (2)</Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                        <div className="space-y-2 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <Label className="text-gray-300 text-sm font-medium">Base Font Size</Label>
+                          <p className="text-xs text-gray-500 mb-3 leading-relaxed">Increase default text size for better legibility.</p>
+                          <RadioGroup
+                            value={uxSettings.bodyFontSize}
+                            onValueChange={(value) => setUxSettings({ ...uxSettings, bodyFontSize: value as "small" | "medium" | "large" })}
+                            className="flex flex-col gap-2"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="small" id="font-small" />
+                              <Label htmlFor="font-small" className="text-sm text-gray-300 cursor-pointer">Small (14px)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="medium" id="font-medium" />
+                              <Label htmlFor="font-medium" className="text-sm text-gray-300 cursor-pointer">Medium (16px)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="large" id="font-large" />
+                              <Label htmlFor="font-large" className="text-sm text-gray-300 cursor-pointer">Large (18px)</Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                        <div className="flex items-start justify-between gap-4 bg-[#1E1E1E] p-4 rounded-lg border border-[#444]">
+                          <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+                            <Label className="text-gray-300 text-sm font-medium">Consistent Section Headings</Label>
+                            <p className="text-xs text-gray-500 leading-relaxed">Improves hierarchy for long pages.</p>
+                          </div>
+                          <Switch
+                            checked={uxSettings.headingsEnabled}
+                            onCheckedChange={(checked) => setUxSettings({ ...uxSettings, headingsEnabled: checked })}
+                            className="shrink-0 data-[state=checked]:bg-primary"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+        )}
 
         {/* Main Content Area - Preview with Tabs */}
         <div className="flex-1 flex flex-col min-w-0 bg-[#2C2C2C]">
           <Tabs defaultValue="components" className="flex-1 flex flex-col overflow-hidden">
             {/* Options Bar - Preview Tabs */}
-            <div className="h-12 flex items-center px-6 border-b border-[#444] bg-[#2C2C2C] shrink-0">
+            <div className="h-12 flex items-center justify-between px-6 border-b border-[#444] bg-[#2C2C2C] shrink-0">
               <TabsList className="bg-transparent p-0 gap-6 h-full">
                 <TabsTrigger
                   value="components"
@@ -1172,11 +1253,33 @@ export function StyleCustomizer() {
                   Pricing
                 </TabsTrigger>
               </TabsList>
+
+              {/* Toolbar Buttons */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsInspectMode(!isInspectMode)}
+                  className={`gap-2 ${isInspectMode ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:text-white hover:bg-[#3C3C3C]'}`}
+                >
+                  <MousePointerClick className="h-4 w-4" />
+                  Inspect
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="gap-2 text-gray-400 hover:text-white hover:bg-[#3C3C3C]"
+                >
+                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  {isFullscreen ? 'Exit' : 'Fullscreen'}
+                </Button>
+              </div>
             </div>
 
             {/* Preview Canvas - Full Space */}
             <div
-              className="flex-1 overflow-y-auto p-8"
+              className={`flex-1 overflow-y-auto p-8 ${isInspectMode ? 'cursor-help' : ''}`}
               style={{
                 backgroundColor: theme.colors.background,
                 color: theme.colors.foreground,
@@ -1212,20 +1315,32 @@ export function StyleCustomizer() {
                   <div className="space-y-2">
                     <Label>Button</Label>
                     <div className="flex flex-wrap gap-2">
-                      <Button>Primary</Button>
-                      <Button variant="outline">Outline</Button>
+                      <InspectWrapper isInspectMode={isInspectMode} tokenData={{ color: theme.colors.primary, radius: theme.radius.medium, font: theme.fonts.sans }}>
+                        <Button>Primary</Button>
+                      </InspectWrapper>
+                      <InspectWrapper isInspectMode={isInspectMode} tokenData={{ color: theme.colors.border, radius: theme.radius.medium, font: theme.fonts.sans }}>
+                        <Button variant="outline">Outline</Button>
+                      </InspectWrapper>
                       {theme.colors.secondary && (
-                        <Button variant="secondary">Secondary</Button>
+                        <InspectWrapper isInspectMode={isInspectMode} tokenData={{ color: theme.colors.secondary, radius: theme.radius.medium, font: theme.fonts.sans }}>
+                          <Button variant="secondary">Secondary</Button>
+                        </InspectWrapper>
                       )}
-                      <Button variant="ghost">Ghost</Button>
-                      <Button variant="destructive">Destructive</Button>
+                      <InspectWrapper isInspectMode={isInspectMode} tokenData={{ color: 'transparent', radius: theme.radius.medium, font: theme.fonts.sans }}>
+                        <Button variant="ghost">Ghost</Button>
+                      </InspectWrapper>
+                      <InspectWrapper isInspectMode={isInspectMode} tokenData={{ color: theme.colors.destructive, radius: theme.radius.medium, font: theme.fonts.sans }}>
+                        <Button variant="destructive">Destructive</Button>
+                      </InspectWrapper>
                     </div>
                   </div>
 
                   {/* Input */}
                   <div className="space-y-2 max-w-sm">
                     <Label>Input</Label>
-                    <Input placeholder="Enter text..." />
+                    <InspectWrapper isInspectMode={isInspectMode} tokenData={{ color: theme.colors.input, radius: theme.radius.small, font: theme.fonts.sans }}>
+                      <Input placeholder="Enter text..." />
+                    </InspectWrapper>
                   </div>
 
                   {/* Select */}
@@ -1258,21 +1373,23 @@ export function StyleCustomizer() {
 
                   {/* Card */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle style={{ fontFamily: theme.fonts.sans }}>
-                          Card Component
-                        </CardTitle>
-                        <CardDescription>
-                          This is a card with your theme applied
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p style={{ fontFamily: theme.fonts.sans }}>
-                          Your design system is taking shape!
-                        </p>
-                      </CardContent>
-                    </Card>
+                    <InspectWrapper isInspectMode={isInspectMode} tokenData={{ color: theme.colors.background, radius: theme.radius.large, shadow: theme.shadows.base, font: theme.fonts.sans }}>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle style={{ fontFamily: theme.fonts.sans }}>
+                            Card Component
+                          </CardTitle>
+                          <CardDescription>
+                            This is a card with your theme applied
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p style={{ fontFamily: theme.fonts.sans }}>
+                            Your design system is taking shape!
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </InspectWrapper>
 
                     <Card>
                       <CardHeader>
