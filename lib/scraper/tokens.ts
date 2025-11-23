@@ -1,5 +1,5 @@
 import { StyledNode, Tokens } from "./types";
-import { normalizeColors, assignColorRoles } from "./color-normalizer";
+import { normalizeColors, assignColorRoles, extractWeightedColors, normalizeWeightedColors } from "./color-normalizer";
 import { normalizeSpacing, parseSpacing } from "./spacing-normalizer";
 import { normalizeRadius, parseBorderRadius } from "./radius-normalizer";
 import { normalizeShadows } from "./shadow-normalizer";
@@ -60,18 +60,27 @@ export function extractTokens(nodes: StyledNode[]): {
     debug.push(`Collected ${spacingValues.length} spacing values`);
     debug.push(`Collected ${shadows.length} shadows`);
 
-    // 2. Color Normalization
-    debug.push("Normalizing colors using k-means clustering...");
+    // 2. Color Normalization (NEW: weighted by importance)
+    debug.push("Extracting weighted colors with importance scoring...");
     let colorClusters;
     let colorRoles;
     
     try {
-      const allColors = [...bgColors, ...textColors, ...buttonColors];
-      colorClusters = normalizeColors(allColors, 8);
-      debug.push(`Created ${colorClusters.length} color clusters`);
+      // NEW: Extract colors with importance weights
+      const weightedColors = extractWeightedColors(nodes);
+      debug.push(`Extracted ${weightedColors.length} weighted colors`);
+      debug.push(`  - Button colors: ${weightedColors.filter(c => c.role === 'button').length}`);
+      debug.push(`  - Background colors: ${weightedColors.filter(c => c.role === 'background').length}`);
+      debug.push(`  - Text colors: ${weightedColors.filter(c => c.role === 'text').length}`);
 
+      // Use weighted normalization for better accuracy
+      colorClusters = normalizeWeightedColors(weightedColors, 8);
+      debug.push(`Created ${colorClusters.length} color clusters using weighted importance`);
+
+      // Still collect raw colors for role assignment
+      const allColors = [...bgColors, ...textColors, ...buttonColors];
       colorRoles = assignColorRoles(colorClusters, bgColors, textColors, buttonColors);
-      debug.push("Assigned color roles");
+      debug.push("Assigned color roles based on weighted clusters");
     } catch (colorError) {
       debug.push(`Warning: Color normalization failed, using defaults: ${colorError}`);
       colorRoles = {

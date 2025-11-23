@@ -2,6 +2,7 @@ export interface ScrapeResult {
   tokens: Tokens;
   components: Components;
   layouts: Layouts;
+  hoverData?: Record<string, any>; // NEW: Extracted hover states from CSS
   debug: DebugLog;
 }
 

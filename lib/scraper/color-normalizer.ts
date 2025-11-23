@@ -1,4 +1,5 @@
 import { converter, formatHex } from "culori";
+import { StyledNode } from "./types";
 
 const toLab = converter("lab");
 const toRgb = converter("rgb");
@@ -7,6 +8,14 @@ export interface ColorCluster {
   canonical: string; // hex color
   members: string[]; // all hex colors in this cluster
   centroid: number[]; // LAB values
+}
+
+export interface WeightedColor {
+  color: string;
+  weight: number; // Importance score
+  elementArea: number;
+  isMainContent: boolean;
+  role: "background" | "text" | "button" | "border";
 }
 
 /**
@@ -160,6 +169,169 @@ function createSimpleClusters(
 /**
  * Convert colors to LAB space, cluster them using k-means,
  * and return canonical colors per cluster
+ */
+/**
+ * Calculate importance weight for a color based on element properties
+ * Weights favor large, visible, main-content elements
+ */
+export function getColorImportance(
+  node: StyledNode,
+  colorRole: "background" | "text" | "button" | "border"
+): number {
+  let weight = 1;
+
+  // Element area (width * height) - larger elements are more important
+  const area = node.rect.width * node.rect.height;
+  const areaWeight = Math.log10(area + 1); // Logarithmic scale
+  weight *= areaWeight;
+
+  // Visibility - elements higher on page and not in footer/header are more important
+  const viewportHeight = 1000; // Assume standard viewport
+  const isInMainContent = node.rect.y > 200 && node.rect.y < viewportHeight - 200;
+  if (isInMainContent) {
+    weight *= 2; // Double weight for main content
+  }
+
+  // Z-index priority
+  if (node.styles.zIndex) {
+    const zIndex = parseInt(node.styles.zIndex);
+    if (zIndex > 0) {
+      weight *= (1 + zIndex / 100); // Small boost for elevated elements
+    }
+  }
+
+  // Button/interactive elements are very important for primary color
+  if (colorRole === "button") {
+    weight *= 3; // Triple weight for button colors
+  }
+
+  // Borders on small elements should be deprioritized
+  if (colorRole === "border" && area < 10000) {
+    weight *= 0.1; // Heavily reduce weight for small borders
+  }
+
+  return weight;
+}
+
+/**
+ * Check if a color is a utility color (structural, not thematic)
+ */
+export function isUtilityColor(
+  color: string,
+  role: "background" | "text" | "button" | "border"
+): boolean {
+  if (!color) return true;
+
+  const lab = toLab(color);
+  if (!lab) return true;
+
+  // Pure black (#000000) or near-black used for borders
+  if (role === "border" && lab.l < 20) {
+    return true; // Likely a structural border
+  }
+
+  // Pure white (#ffffff) backgrounds on small elements
+  if (role === "background" && lab.l > 95) {
+    return true; // Likely a default background
+  }
+
+  // Very low saturation (grayscale) on borders/backgrounds
+  const chroma = Math.sqrt(lab.a * lab.a + lab.b * lab.b);
+  if (chroma < 10 && (role === "border" || role === "background")) {
+    return true; // Gray structural elements
+  }
+
+  return false;
+}
+
+/**
+ * Extract weighted colors from styled nodes
+ */
+export function extractWeightedColors(nodes: StyledNode[]): WeightedColor[] {
+  const weightedColors: WeightedColor[] = [];
+
+  for (const node of nodes) {
+    const area = node.rect.width * node.rect.height;
+    const isMainContent = node.rect.y > 200 && node.rect.y < 800;
+
+    // Background colors
+    if (node.styles.backgroundColor && node.styles.backgroundColor !== "transparent") {
+      const weight = getColorImportance(node, "background");
+      if (!isUtilityColor(node.styles.backgroundColor, "background")) {
+        weightedColors.push({
+          color: node.styles.backgroundColor,
+          weight,
+          elementArea: area,
+          isMainContent,
+          role: "background",
+        });
+      }
+    }
+
+    // Text colors
+    if (node.styles.color) {
+      const weight = getColorImportance(node, "text");
+      if (!isUtilityColor(node.styles.color, "text")) {
+        weightedColors.push({
+          color: node.styles.color,
+          weight,
+          elementArea: area,
+          isMainContent,
+          role: "text",
+        });
+      }
+    }
+
+    // Button colors (high priority)
+    if (
+      node.tag === "button" ||
+      node.role === "button" ||
+      node.classes.some(c => c.includes("btn") || c.includes("button"))
+    ) {
+      if (node.styles.backgroundColor) {
+        const weight = getColorImportance(node, "button");
+        weightedColors.push({
+          color: node.styles.backgroundColor,
+          weight,
+          elementArea: area,
+          isMainContent,
+          role: "button",
+        });
+      }
+    }
+  }
+
+  return weightedColors;
+}
+
+/**
+ * Normalize colors with weighted importance (NEW: improved accuracy)
+ */
+export function normalizeWeightedColors(
+  weightedColors: WeightedColor[],
+  numClusters: number = 6
+): ColorCluster[] {
+  if (weightedColors.length === 0) {
+    return [];
+  }
+
+  // Create a weighted list where colors appear multiple times based on importance
+  const expandedColors: string[] = [];
+  
+  for (const wc of weightedColors) {
+    // Repeat color based on weight (min 1, max 10 times)
+    const repetitions = Math.min(10, Math.max(1, Math.floor(wc.weight)));
+    for (let i = 0; i < repetitions; i++) {
+      expandedColors.push(wc.color);
+    }
+  }
+
+  // Now use the standard normalization with weighted data
+  return normalizeColors(expandedColors, numClusters);
+}
+
+/**
+ * Original normalize colors function (kept for backward compatibility)
  */
 export function normalizeColors(colors: string[], numClusters: number = 6): ColorCluster[] {
   try {

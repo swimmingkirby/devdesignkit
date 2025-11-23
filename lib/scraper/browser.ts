@@ -1,7 +1,8 @@
 import { chromium, Browser, Page } from "playwright";
 import { StyledNode } from "./types";
+import { extractComponentHoverData, serializeHoverData } from "./hover-extractor";
 
-export async function fetchAndRender(url: string): Promise<{ nodes: StyledNode[]; debug: string[] }> {
+export async function fetchAndRender(url: string): Promise<{ nodes: StyledNode[]; hoverData: Record<string, any>; debug: string[] }> {
   const logs: string[] = [];
   let browser: Browser | null = null;
 
@@ -138,10 +139,21 @@ export async function fetchAndRender(url: string): Promise<{ nodes: StyledNode[]
     if (nodes.length === 0) {
       logs.push("Warning: No nodes extracted. Page may not have loaded correctly.");
     }
+
+    // Extract hover states before closing context
+    logs.push("Extracting hover states from CSS...");
+    let hoverData: Record<string, any> = {};
+    try {
+      const hoverDataMap = await extractComponentHoverData(page);
+      hoverData = serializeHoverData(hoverDataMap);
+      logs.push(`Extracted hover data for ${Object.keys(hoverData).length} component types`);
+    } catch (hoverError: any) {
+      logs.push(`Warning: Hover extraction failed: ${hoverError.message}`);
+    }
     
     await context.close();
     
-    return { nodes, debug: logs };
+    return { nodes, hoverData, debug: logs };
     
   } catch (error: any) {
     logs.push(`Error: ${error.message}`);

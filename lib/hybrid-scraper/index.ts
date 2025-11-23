@@ -3,6 +3,7 @@ import { scrape as domScrape } from "../scraper/index";
 import { analyzeImageWithLLM } from "../image-analyzer/index";
 import { fetchScreenshot } from "./screenshot";
 import { mergeTokens, mergeComponents, mergeLayouts } from "./merger";
+import { MergeLogger } from "./merge-logger";
 
 /**
  * Hybrid scraper configuration
@@ -243,6 +244,8 @@ export async function hybridScrape(
     let mergedTokens: Tokens;
     let mergedComponents: Components;
     let mergedLayouts: Layouts;
+    let mergeLogger: MergeLogger | undefined;
+    let hoverDataMap: Map<string, any> | undefined;
     
     // Determine which results we have
     const hasDom = !!domResult;
@@ -252,10 +255,27 @@ export async function hybridScrape(
       debugLogs.push(`Merging strategy: ${config.mergeStrategy}`);
       debugLogs.push("");
       
-      // Both results available - merge intelligently
-      mergedTokens = mergeTokens(domResult!.tokens, visionResult!.tokens, config.mergeStrategy);
-      mergedComponents = mergeComponents(domResult!.components, visionResult!.components, config.mergeStrategy);
-      mergedLayouts = mergeLayouts(domResult!.layouts, visionResult!.layouts, config.mergeStrategy);
+      // Create merge logger for detailed tracking
+      mergeLogger = new MergeLogger();
+      
+      // Convert hover data to Map if available
+      if (domResult!.hoverData) {
+        hoverDataMap = new Map(Object.entries(domResult!.hoverData));
+      }
+      
+      // Both results available - merge intelligently with logging
+      mergedTokens = mergeTokens(domResult!.tokens, visionResult!.tokens, config.mergeStrategy, mergeLogger);
+      mergedComponents = mergeComponents(
+        domResult!.components, 
+        visionResult!.components, 
+        config.mergeStrategy, 
+        mergeLogger,
+        hoverDataMap
+      );
+      mergedLayouts = mergeLayouts(domResult!.layouts, visionResult!.layouts, config.mergeStrategy, mergeLogger);
+      
+      // Log summary to console
+      mergeLogger.logSummary();
       
       debugLogs.push("✓ Successfully merged results from both scrapers");
       debugLogs.push(`  - Tokens: Combined ${Object.keys(mergedTokens.colors).length} color variants`);
@@ -290,18 +310,28 @@ export async function hybridScrape(
       debugLogs.push(`⚠ Completed with ${debugErrors.length} non-fatal error(s)`);
     }
     
-    // Build final result
-    const finalDebug: DebugLog = {
+    // Build final result with merge decisions
+    const finalDebug: any = {
       url,
       timestamp,
       logs: debugLogs,
       errors: debugErrors,
     };
+
+    // Add merge decisions if logger was used
+    if (mergeLogger) {
+      const debugOutput = mergeLogger.getDebugOutput();
+      finalDebug.mergeDecisions = debugOutput.mergeDecisions;
+      finalDebug.validationWarnings = debugOutput.validationWarnings;
+      finalDebug.mergeStatistics = debugOutput.statistics;
+      finalDebug.mergeDuration = debugOutput.duration;
+    }
     
     return {
       tokens: mergedTokens,
       components: mergedComponents,
       layouts: mergedLayouts,
+      hoverData: domResult?.hoverData, // Include hover data
       debug: finalDebug,
       individual: {
         dom: domResult,

@@ -3,6 +3,7 @@ import { fetchAndRender } from "./browser";
 import { extractTokens } from "./tokens";
 import { extractComponents } from "./component-extractor";
 import { extractLayout } from "./layout-extractor";
+import { extractComponentHoverData, serializeHoverData } from "./hover-extractor";
 
 /**
  * Default fallback tokens
@@ -80,10 +81,12 @@ export async function scrape(url: string): Promise<ScrapeResult> {
     // 1. Fetch and Render
     debugLogs.push("=== Phase 1: Fetch and Render ===");
     let nodes;
+    let hoverData: Record<string, any> = {};
     
     try {
-      const { nodes: extractedNodes, debug: browserLogs } = await fetchAndRender(url);
+      const { nodes: extractedNodes, hoverData: extractedHoverData, debug: browserLogs } = await fetchAndRender(url);
       nodes = extractedNodes;
+      hoverData = extractedHoverData;
       debugLogs = [...debugLogs, ...browserLogs];
 
       if (nodes.length === 0) {
@@ -167,6 +170,7 @@ export async function scrape(url: string): Promise<ScrapeResult> {
       tokens,
       components,
       layouts,
+      hoverData, // NEW: Include extracted hover states
       debug,
     };
 
@@ -179,6 +183,7 @@ export async function scrape(url: string): Promise<ScrapeResult> {
       tokens: DEFAULT_TOKENS,
       components: DEFAULT_COMPONENTS,
       layouts: DEFAULT_LAYOUTS,
+      hoverData: {}, // Empty hover data on error
       debug: {
         url,
         timestamp,

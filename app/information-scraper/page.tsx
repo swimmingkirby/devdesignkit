@@ -1,14 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Download, AlertCircle, Upload, Link as LinkIcon, ZoomIn, Combine } from "lucide-react";
+import { Loader2, Download, AlertCircle, Upload, Link as LinkIcon, ZoomIn, Combine, Palette } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { convertScraperToTheme, validateScraperOutput } from "@/lib/utils/scraper-converter";
 
 export default function InformationScraper() {
+  const router = useRouter();
   const [inputMode, setInputMode] = useState<"url" | "image" | "hybrid">("hybrid");
   const [url, setUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -16,6 +20,8 @@ export default function InformationScraper() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<any>(null);
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [themeName, setThemeName] = useState("");
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -132,6 +138,45 @@ export default function InformationScraper() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleEditInCustomizer = () => {
+    if (!results) return;
+
+    try {
+      // Validate and convert the scraper output
+      if (!validateScraperOutput(results)) {
+        alert("Invalid scraper output format. Cannot open in customizer.");
+        return;
+      }
+
+      // Generate default name from URL
+      const defaultName = url ? new URL(url).hostname.replace("www.", "").split(".")[0] : "Imported Theme";
+      setThemeName(defaultName.charAt(0).toUpperCase() + defaultName.slice(1));
+      setShowNameDialog(true);
+    } catch (error) {
+      console.error("Failed to convert theme:", error);
+      alert("Failed to convert theme for customizer. Check console for details.");
+    }
+  };
+
+  const handleConfirmEdit = () => {
+    if (!results || !themeName.trim()) return;
+
+    try {
+      const theme = convertScraperToTheme(results);
+      
+      // Store the theme in sessionStorage for the customizer to pick up
+      sessionStorage.setItem("importedTheme", JSON.stringify(theme));
+      sessionStorage.setItem("importedThemeName", themeName.trim());
+      sessionStorage.setItem("importedThemeUrl", url || "imported-theme");
+      
+      // Navigate to customizer
+      router.push("/customizer");
+    } catch (error) {
+      console.error("Failed to convert theme:", error);
+      alert("Failed to convert theme for customizer. Check console for details.");
+    }
   };
 
   return (
@@ -314,10 +359,16 @@ export default function InformationScraper() {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-semibold">Analysis Results</h2>
-              <Button variant="outline" onClick={downloadArtifacts}>
-                <Download className="mr-2 h-4 w-4" />
-                Download JSON
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleEditInCustomizer}>
+                  <Palette className="mr-2 h-4 w-4" />
+                  Edit in Customizer
+                </Button>
+                <Button variant="outline" onClick={downloadArtifacts}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download JSON
+                </Button>
+              </div>
             </div>
 
             <Tabs defaultValue="tokens" className="w-full">
@@ -460,6 +511,50 @@ export default function InformationScraper() {
             </Tabs>
           </div>
         )}
+
+        {/* Name Theme Dialog */}
+        <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Name Your Theme</DialogTitle>
+              <CardDescription>
+                Give your imported theme a memorable name before opening it in the customizer.
+              </CardDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="theme-name">Theme Name</Label>
+                <Input
+                  id="theme-name"
+                  value={themeName}
+                  onChange={(e) => setThemeName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && themeName.trim()) {
+                      handleConfirmEdit();
+                    }
+                  }}
+                  placeholder="e.g., Stripe Theme, My Custom Theme"
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowNameDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmEdit}
+                  disabled={!themeName.trim()}
+                >
+                  <Palette className="mr-2 h-4 w-4" />
+                  Open in Customizer
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
