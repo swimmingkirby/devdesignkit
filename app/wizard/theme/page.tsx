@@ -95,10 +95,19 @@ export default function ThemePage() {
     }
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-white">
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push("/wizard/source")}
+                className="gap-2 -ml-2 text-gray-400 hover:text-white hover:bg-[#333] rounded-md"
+            >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Wizard
+            </Button>
             <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">Choose your Aesthetic</h1>
-                <p className="text-muted-foreground text-lg">
+                <p className="text-gray-400 text-lg">
                     Select a visual style that matches your brand personality.
                 </p>
             </div>
@@ -107,7 +116,7 @@ export default function ThemePage() {
                 {/* Left Column: Aesthetic Selection */}
                 <div className="space-y-6">
                     <div className="space-y-4">
-                        <Label className="text-base font-semibold">Visual Style</Label>
+                        <Label className="text-base font-semibold text-gray-200">Visual Style</Label>
                         <RadioGroup
                             value={selectedAesthetic}
                             onValueChange={setSelectedAesthetic}
@@ -122,17 +131,17 @@ export default function ThemePage() {
                                     />
                                     <Label
                                         htmlFor={aesthetic.id}
-                                        className="flex items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all"
+                                        className="flex items-center justify-between rounded-none border border-[#444] bg-[#1E1E1E] p-4 hover:bg-[#252525] peer-data-[state=checked]:border-blue-500 peer-data-[state=checked]:bg-[#252525] cursor-pointer transition-all"
                                     >
                                         <div className="flex items-center gap-3">
                                             <div
-                                                className="h-8 w-8 rounded-full border shadow-sm"
+                                                className="h-8 w-8 rounded-full border border-[#444] shadow-sm"
                                                 style={{ backgroundColor: aesthetic.previewColor }}
                                             />
-                                            <span className="font-medium">{aesthetic.name}</span>
+                                            <span className="font-medium text-gray-200">{aesthetic.name}</span>
                                         </div>
                                         {selectedAesthetic === aesthetic.id && (
-                                            <Check className="h-4 w-4 text-primary" />
+                                            <Check className="h-4 w-4 text-blue-500" />
                                         )}
                                     </Label>
                                 </div>
@@ -144,8 +153,8 @@ export default function ThemePage() {
                 {/* Right Column: Theme Variations */}
                 <div className="space-y-6">
                     <div className="space-y-2">
-                        <Label className="text-base font-semibold">Theme Variations</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <Label className="text-base font-semibold text-gray-200">Theme Variations</Label>
+                        <p className="text-sm text-gray-400">
                             Select a specific color palette and typography combination.
                         </p>
                     </div>
@@ -155,8 +164,8 @@ export default function ThemePage() {
                             <Card
                                 key={theme.id}
                                 className={cn(
-                                    "cursor-pointer transition-all hover:border-primary/50 overflow-hidden relative group rounded-xl",
-                                    selectedThemeId === theme.id ? "border-primary ring-1 ring-primary shadow-md" : "border-border"
+                                    "cursor-pointer transition-all hover:border-blue-500/50 overflow-hidden relative group rounded-none bg-[#1E1E1E]",
+                                    selectedThemeId === theme.id ? "border-blue-500 ring-1 ring-blue-500 shadow-md" : "border-[#444]"
                                 )}
                                 onClick={() => setSelectedThemeId(theme.id)}
                             >
@@ -175,12 +184,12 @@ export default function ThemePage() {
                                     </div>
 
                                     {/* Theme Info */}
-                                    <div className="p-4 space-y-3 bg-card">
+                                    <div className="p-4 space-y-3 bg-[#1E1E1E]">
                                         <div className="flex items-center justify-between">
-                                            <span className="font-semibold">{theme.name}</span>
+                                            <span className="font-semibold text-gray-200">{theme.name}</span>
                                             {selectedThemeId === theme.id && (
-                                                <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                                                    <Check className="h-3 w-3 text-primary-foreground" />
+                                                <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
+                                                    <Check className="h-3 w-3 text-white" />
                                                 </div>
                                             )}
                                         </div>
@@ -209,7 +218,7 @@ export default function ThemePage() {
                                                     Input
                                                 </div>
                                             </div>
-                                            <div className="text-[10px] text-muted-foreground flex gap-2">
+                                            <div className="text-[10px] text-gray-400 flex gap-2">
                                                 <span>{theme.tokens.typography.headingFont}</span>
                                                 <span>•</span>
                                                 <span>{theme.tokens.radius}px Radius</span>
@@ -224,20 +233,12 @@ export default function ThemePage() {
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between pt-8 border-t">
-                <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => router.push("/wizard/source")}
-                    className="gap-2"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back
-                </Button>
+            <div className="flex justify-end pt-8 border-t border-[#444]">
+
                 <Button
                     size="lg"
                     onClick={handleContinue}
-                    className="gap-2 min-w-[140px]"
+                    className="gap-2 min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white rounded-md"
                     disabled={!selectedThemeId}
                 >
                     Continue

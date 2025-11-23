@@ -55,10 +55,10 @@ export default function SourcePage() {
     }
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-white">
             <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">How would you like to start?</h1>
-                <p className="text-muted-foreground text-lg">
+                <p className="text-gray-400 text-lg">
                     Choose your starting point for creating your design system.
                 </p>
             </div>
@@ -72,45 +72,45 @@ export default function SourcePage() {
                         <Card
                             key={option.id}
                             className={cn(
-                                "cursor-pointer transition-all hover:border-primary/50 relative group",
-                                isSelected ? "border-primary ring-2 ring-primary shadow-lg" : "border-border"
+                                "cursor-pointer transition-all hover:bg-[#252525] relative group rounded-none bg-[#1E1E1E]",
+                                isSelected ? "border-blue-500 ring-1 ring-blue-500 shadow-lg" : "border-[#444]"
                             )}
                             onClick={() => setSelectedSource(option.id)}
                         >
                             {option.recommended && (
-                                <div className="absolute -top-3 left-4 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
+                                <div className="absolute -top-3 left-4 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
                                     Recommended
                                 </div>
                             )}
-                            
+
                             <CardHeader className="pb-4">
                                 <div className="flex items-start gap-4">
                                     <div className={cn(
-                                        "p-3 rounded-lg transition-colors",
-                                        isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
+                                        "p-3 rounded-md transition-colors",
+                                        isSelected ? "bg-blue-600 text-white" : "bg-[#252525] text-gray-400"
                                     )}>
                                         <Icon className="h-6 w-6" />
                                     </div>
                                     <div className="flex-1">
-                                        <CardTitle className="text-xl mb-2">{option.title}</CardTitle>
-                                        <CardDescription className="text-base">
+                                        <CardTitle className="text-xl mb-2 text-white">{option.title}</CardTitle>
+                                        <CardDescription className="text-base text-gray-400">
                                             {option.description}
                                         </CardDescription>
                                     </div>
                                 </div>
                             </CardHeader>
-                            
+
                             <CardContent className="space-y-3">
                                 <div className="space-y-2">
                                     {option.features.map((feature, index) => (
-                                        <div key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
+                                        <div key={index} className="flex items-start gap-2 text-sm text-gray-400">
                                             <div className={cn(
                                                 "mt-0.5 h-4 w-4 rounded-full flex items-center justify-center shrink-0",
-                                                isSelected ? "bg-primary/10" : "bg-muted"
+                                                isSelected ? "bg-blue-500/10" : "bg-[#333]"
                                             )}>
                                                 <div className={cn(
                                                     "h-1.5 w-1.5 rounded-full",
-                                                    isSelected ? "bg-primary" : "bg-muted-foreground"
+                                                    isSelected ? "bg-blue-500" : "bg-gray-500"
                                                 )} />
                                             </div>
                                             <span>{feature}</span>
@@ -124,12 +124,12 @@ export default function SourcePage() {
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between pt-8 border-t">
+            <div className="flex justify-between pt-8 border-t border-[#444]">
                 <Button
-                    variant="outline"
+                    variant="ghost"
                     size="lg"
                     onClick={() => router.push("/wizard/product")}
-                    className="gap-2"
+                    className="gap-2 text-gray-400 hover:text-white hover:bg-[#333] rounded-md"
                 >
                     <ArrowLeft className="h-4 w-4" />
                     Back
@@ -137,7 +137,7 @@ export default function SourcePage() {
                 <Button
                     size="lg"
                     onClick={handleContinue}
-                    className="gap-2 min-w-[140px]"
+                    className="gap-2 min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white rounded-md"
                 >
                     Continue
                     <ArrowRight className="h-4 w-4" />

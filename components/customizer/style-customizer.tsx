@@ -79,7 +79,7 @@ const FONT_OPTIONS = [
 ]
 
 export function StyleCustomizer() {
-  const { theme: rawTheme, updateTheme } = useTheme()
+  const { theme: rawTheme, updateTheme, activeThemeId } = useTheme()
   // Type assertion to include optional properties
   const theme = rawTheme as ThemeTokens & {
     fonts: ThemeTokens['fonts'] & {
@@ -99,7 +99,7 @@ export function StyleCustomizer() {
   const [importedThemeName, setImportedThemeName] = React.useState<string | null>(null)
   const [showSuccessBanner, setShowSuccessBanner] = React.useState(false)
   const isImportingRef = React.useRef(false) // Track if we're importing to prevent theme reset
-  
+
   // UX Settings state (local only, not connected to theme tokens yet)
   const [uxSettings, setUxSettings] = React.useState({
     touchTarget: false,
@@ -122,51 +122,51 @@ export function StyleCustomizer() {
     const importedThemeJson = sessionStorage.getItem("importedTheme");
     const importedThemeUrl = sessionStorage.getItem("importedThemeUrl");
     const themeName = sessionStorage.getItem("importedThemeName");
-    
+
     if (importedThemeJson) {
       try {
         const importedTheme = JSON.parse(importedThemeJson) as ThemeTokens;
-        
+
         console.log("📥 Importing theme from scraper:");
         console.log("  Name:", themeName);
         console.log("  URL:", importedThemeUrl);
         console.log("  Theme data:", importedTheme);
-        
+
         // Set flag to prevent handleThemeChange from overwriting
         isImportingRef.current = true;
-        
+
         // Set the theme name FIRST (before changing selectedTheme)
         setImportedThemeName(themeName || "Imported Theme");
-        
+
         // Update the selected theme to "custom" to reflect imported theme
-        setSelectedTheme("custom");
-        
+        // setSelectedTheme("custom"); // Removed local state
+
         // Apply the theme - use setTimeout to ensure state updates are batched
         setTimeout(() => {
           console.log("🎨 Applying imported theme NOW...");
-          updateTheme(importedTheme);
+          updateTheme(importedTheme, "custom"); // Update with ID
           console.log("✓ Theme applied via updateTheme()");
         }, 0);
-        
+
         // Show success banner (auto-dismisses)
         setShowSuccessBanner(true);
-        
+
         // Clear from session storage after applying
         sessionStorage.removeItem("importedTheme");
         sessionStorage.removeItem("importedThemeUrl");
         sessionStorage.removeItem("importedThemeName");
-        
+
         // Show success message
         console.log(`✓ Applied theme "${themeName}" from: ${importedThemeUrl || "scraper"}`);
         console.log("  Primary color:", importedTheme.colors.primary);
         console.log("  Background:", importedTheme.colors.background);
-        
+
         // Keep the importing flag set for longer to prevent race conditions
         setTimeout(() => {
           isImportingRef.current = false;
           console.log("🔓 Import protection released");
         }, 500);
-        
+
         // Auto-dismiss success banner after 5 seconds
         setTimeout(() => {
           setShowSuccessBanner(false);
@@ -187,35 +187,57 @@ export function StyleCustomizer() {
   // Handle theme selection from dropdown
   const handleThemeChange = React.useCallback((themeKey: string) => {
     console.log(`🎨 Theme selector changed to: ${themeKey}`);
-    
+
     // If we're currently importing, ignore this change
     if (isImportingRef.current) {
       console.log(`⏭️  Ignoring theme change during import`);
       return;
     }
-    
-    setSelectedTheme(themeKey)
-    
+
+    // setSelectedTheme(themeKey) // Removed local state
+
     // If switching to "custom" and we have an imported theme name, don't load preset
     // This preserves the imported theme from the scraper
     if (themeKey === "custom" && importedThemeName) {
       console.log(`✓ Keeping imported theme: ${importedThemeName}`);
-      return; // Don't load the preset "custom" theme
+      updateTheme({}, "custom")
+      return;
     }
-    
+
     const selectedThemeData = presetThemes[themeKey]
     if (selectedThemeData) {
       console.log(`✓ Loading preset theme: ${themeKey}`);
       // Convert the old theme structure to new ThemeTokens structure
       const tokens = convertLegacyToNewTokens(selectedThemeData.tokens)
-      updateTheme(tokens)
+      updateTheme(tokens, themeKey)
+    } else {
+      updateTheme({}, themeKey)
     }
-    
+
     // Clear imported theme name when switching to a non-custom preset theme
     if (themeKey !== "custom") {
       setImportedThemeName(null)
     }
   }, [updateTheme, importedThemeName])
+
+  const handleReset = React.useCallback(() => {
+    if (activeThemeId === "custom") {
+      // If custom, maybe we can't reset easily unless we stored the original custom state?
+      // For now, let's just do nothing or maybe reset to minimal-light?
+      // Or if importedThemeName exists, re-import?
+      // Let's just log for now.
+      console.log("Resetting custom theme not fully supported yet");
+      return;
+    }
+
+    // Re-apply the preset
+    const selectedThemeData = presetThemes[activeThemeId]
+    if (selectedThemeData) {
+      console.log(`↺ Resetting theme: ${activeThemeId}`);
+      const tokens = convertLegacyToNewTokens(selectedThemeData.tokens)
+      updateTheme(tokens)
+    }
+  }, [activeThemeId, updateTheme])
 
   const handleColorChange = (key: keyof typeof theme.colors, value: string) => {
     updateTheme({
@@ -255,13 +277,20 @@ export function StyleCustomizer() {
 
   // Initialize theme on mount
   React.useEffect(() => {
-    const initialTheme = presetThemes[selectedTheme]
+    // We use activeThemeId from context now, so we might not need to force update on mount
+    // unless we want to ensure the preset is loaded.
+    // But updateTheme is stable.
+    // Let's keep it safe.
+    const initialTheme = presetThemes[activeThemeId]
     if (initialTheme) {
       const tokens = convertLegacyToNewTokens(initialTheme.tokens)
+      // Don't trigger update if it matches? Hard to check.
+      // Actually, context initializes with defaultTheme.
+      // If activeThemeId is minimal-light, we should ensure tokens match.
       updateTheme(tokens)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Only run on mount - updateTheme is stable from context
+  }, [])
 
   // Generate bar heights only on client to avoid hydration mismatch
   React.useEffect(() => {
@@ -275,8 +304,9 @@ export function StyleCustomizer() {
 
       {/* Second Bar - Theme Selector and Actions */}
       <ActionBar
-        selectedTheme={selectedTheme}
+        selectedTheme={activeThemeId}
         onThemeChange={handleThemeChange}
+        onReset={handleReset}
         importedThemeName={importedThemeName}
         isImporting={isImportingRef.current}
       />
@@ -331,33 +361,32 @@ export function StyleCustomizer() {
                 <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">
                   Current Theme Preview
                 </div>
-                <div className="flex gap-2 mb-3">
-                  {/* Primary color swatch */}
-                  <div className="flex-1">
-                    <div 
-                      className="h-12 rounded-md border border-[#444] mb-1.5" 
-                      style={{ backgroundColor: theme.colors.primary }}
-                    />
-                    <div className="text-[10px] text-gray-500 text-center">Primary</div>
+                <div className="flex items-center gap-2 mb-4">
+                  {/* Palette Row */}
+                  <div className="flex items-center gap-1.5 bg-[#111] p-1.5 rounded-full border border-[#333]">
+                    {[
+                      { color: theme.colors.primary, label: "Primary" },
+                      { color: theme.colors.background, label: "Background" },
+                      { color: theme.colors.foreground, label: "Foreground" },
+                      { color: theme.colors.accent || theme.colors.primary, label: "Accent" },
+                      { color: theme.colors.muted, label: "Muted" },
+                    ].map((swatch, i) => (
+                      <div
+                        key={i}
+                        className="group relative"
+                      >
+                        <div
+                          className="h-6 w-6 rounded-full border border-[#444] shadow-sm cursor-help transition-transform hover:scale-110"
+                          style={{ backgroundColor: swatch.color }}
+                        />
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-[10px] text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                          {swatch.label}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  {/* Background color swatch */}
-                  <div className="flex-1">
-                    <div 
-                      className="h-12 rounded-md border border-[#444] mb-1.5" 
-                      style={{ backgroundColor: theme.colors.background }}
-                    />
-                    <div className="text-[10px] text-gray-500 text-center">Background</div>
-                  </div>
-                  {/* Accent color swatch */}
-                  {theme.colors.accent && (
-                    <div className="flex-1">
-                      <div 
-                        className="h-12 rounded-md border border-[#444] mb-1.5" 
-                        style={{ backgroundColor: theme.colors.accent }}
-                      />
-                      <div className="text-[10px] text-gray-500 text-center">Accent</div>
-                    </div>
-                  )}
+                  <div className="h-px flex-1 bg-[#333]" />
                 </div>
                 <div className="text-xs text-gray-400">
                   <div className="flex justify-between items-center py-1">
@@ -373,26 +402,26 @@ export function StyleCustomizer() {
 
               <Tabs defaultValue="colors" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 bg-[#1E1E1E] text-gray-400 p-1 rounded-lg mb-6">
-                  <TabsTrigger 
-                    value="colors" 
+                  <TabsTrigger
+                    value="colors"
                     className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
                   >
                     Colors
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="typography" 
+                  <TabsTrigger
+                    value="typography"
                     className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
                   >
                     Type
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="other" 
+                  <TabsTrigger
+                    value="other"
                     className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
                   >
                     Other
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="ux-principles" 
+                  <TabsTrigger
+                    value="ux-principles"
                     className="rounded-md data-[state=active]:bg-[#3C3C3C] data-[state=active]:text-white transition-all data-[state=active]:shadow-sm text-xs"
                   >
                     UX
@@ -1110,7 +1139,7 @@ export function StyleCustomizer() {
                 >
                   Colors
                 </TabsTrigger>
-                
+
                 {/* Dynamic tabs from scraped layouts */}
                 {hasScrapedData && scrapedData?.layouts?.sections && scrapedData.layouts.sections.length > 0 && (
                   <>
@@ -1128,7 +1157,7 @@ export function StyleCustomizer() {
                     ))}
                   </>
                 )}
-                
+
                 {/* Default template tabs */}
                 <TabsTrigger
                   value="dashboard"
@@ -1336,7 +1365,7 @@ export function StyleCustomizer() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Scraped Components from Inspiration Website */}
                 {hasScrapedData && scrapedData?.components && (
                   <>
@@ -1390,7 +1419,7 @@ export function StyleCustomizer() {
                   </>
                 )}
               </TabsContent>
-              
+
               {/* Dynamic Layout TabsContent from Scraped Data */}
               {hasScrapedData && scrapedData?.layouts?.sections && scrapedData.layouts.sections.map((section, index) => (
                 <TabsContent
@@ -1411,9 +1440,9 @@ export function StyleCustomizer() {
               <TabsContent value="typography" className="mt-0 space-y-8">
                 <div className="space-y-6">
                   <div>
-                    <h1 
-                      className="font-bold mb-4" 
-                      style={{ 
+                    <h1
+                      className="font-bold mb-4"
+                      style={{
                         fontFamily: theme.fonts.heading || theme.fonts.sans,
                         fontSize: theme.fonts.sizes.heading[0] || "48px"
                       }}
@@ -1424,11 +1453,11 @@ export function StyleCustomizer() {
                       Font: {theme.fonts.heading || theme.fonts.sans} · Size: {theme.fonts.sizes.heading[0]}
                     </p>
                   </div>
-                  
+
                   <div>
-                    <h2 
-                      className="font-semibold mb-4" 
-                      style={{ 
+                    <h2
+                      className="font-semibold mb-4"
+                      style={{
                         fontFamily: theme.fonts.heading || theme.fonts.sans,
                         fontSize: theme.fonts.sizes.heading[1] || "36px"
                       }}
@@ -1439,11 +1468,11 @@ export function StyleCustomizer() {
                       Font: {theme.fonts.heading || theme.fonts.sans} · Size: {theme.fonts.sizes.heading[1]}
                     </p>
                   </div>
-                  
+
                   <div>
-                    <h3 
-                      className="font-semibold mb-4" 
-                      style={{ 
+                    <h3
+                      className="font-semibold mb-4"
+                      style={{
                         fontFamily: theme.fonts.heading || theme.fonts.sans,
                         fontSize: theme.fonts.sizes.heading[2] || "24px"
                       }}
@@ -1454,11 +1483,11 @@ export function StyleCustomizer() {
                       Font: {theme.fonts.heading || theme.fonts.sans} · Size: {theme.fonts.sizes.heading[2]}
                     </p>
                   </div>
-                  
+
                   <div>
-                    <h4 
-                      className="font-semibold mb-4" 
-                      style={{ 
+                    <h4
+                      className="font-semibold mb-4"
+                      style={{
                         fontFamily: theme.fonts.heading || theme.fonts.sans,
                         fontSize: "20px"
                       }}
@@ -1470,14 +1499,14 @@ export function StyleCustomizer() {
                     </p>
                   </div>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="space-y-4">
                   <div>
-                    <p 
-                      className="mb-4" 
-                      style={{ 
+                    <p
+                      className="mb-4"
+                      style={{
                         fontFamily: theme.fonts.sans,
                         fontSize: theme.fonts.sizes.body
                       }}
@@ -1488,12 +1517,12 @@ export function StyleCustomizer() {
                       Font: {theme.fonts.sans} · Size: {theme.fonts.sizes.body}
                     </p>
                   </div>
-                  
+
                   {theme.fonts.secondary && (
                     <div>
-                      <p 
-                        className="mb-4" 
-                        style={{ 
+                      <p
+                        className="mb-4"
+                        style={{
                           fontFamily: theme.fonts.secondary,
                           fontSize: theme.fonts.sizes.body
                         }}
@@ -1505,11 +1534,11 @@ export function StyleCustomizer() {
                       </p>
                     </div>
                   )}
-                  
+
                   <div>
-                    <p 
-                      className="mb-4 opacity-70" 
-                      style={{ 
+                    <p
+                      className="mb-4 opacity-70"
+                      style={{
                         fontFamily: theme.fonts.sans,
                         fontSize: theme.fonts.sizes.caption
                       }}
@@ -1520,11 +1549,11 @@ export function StyleCustomizer() {
                       Font: {theme.fonts.sans} · Size: {theme.fonts.sizes.caption}
                     </p>
                   </div>
-                  
+
                   <div>
-                    <code 
-                      className="block p-4 rounded" 
-                      style={{ 
+                    <code
+                      className="block p-4 rounded"
+                      style={{
                         fontFamily: theme.fonts.mono,
                         fontSize: theme.fonts.sizes.caption,
                         backgroundColor: theme.colors.muted
@@ -1537,7 +1566,7 @@ export function StyleCustomizer() {
                     </p>
                   </div>
                 </div>
-                
+
                 {theme.fonts.weights && (
                   <>
                     <Separator />
@@ -1871,102 +1900,326 @@ export function StyleCustomizer() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="dashboard" className="mt-0">
-                <div className="flex h-[600px] rounded-lg overflow-hidden border" style={{ backgroundColor: theme.colors.background, borderColor: theme.colors.border }}>
-                  {/* Left Sidebar */}
-                  <aside className="w-64 flex flex-col border-r" style={{ backgroundColor: theme.colors.muted, borderColor: theme.colors.border }}>
-                    <div className="p-4 flex items-center justify-between">
-                      <span className="font-semibold" style={{ fontFamily: theme.fonts.sans }}>Acme Inc.</span>
-                      <ChevronUp className="h-4 w-4 opacity-70" />
+              <TabsContent value="dashboard" className="mt-0 h-full">
+                <div className="flex flex-col h-full rounded-lg overflow-hidden border shadow-xl" style={{ backgroundColor: theme.colors.background, borderColor: theme.colors.border }}>
+                  {/* Top Navigation Bar */}
+                  <header className="h-16 border-b flex items-center justify-between px-6 shrink-0 z-10" style={{ backgroundColor: theme.colors.background, borderColor: theme.colors.border }}>
+                    <div className="flex items-center gap-2 font-bold text-xl" style={{ color: theme.colors.primary }}>
+                      <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: theme.colors.primary, color: theme.colors.primaryForeground }}>
+                        <LayoutDashboard className="h-5 w-5" />
+                      </div>
+                      <span style={{ fontFamily: theme.fonts.heading || theme.fonts.sans }}>Nexus</span>
                     </div>
-                    <div className="p-4">
-                      <Button className="w-full mb-4 gap-2">
-                        <Plus className="h-4 w-4" /> Quick Create
+
+                    <div className="flex items-center gap-4">
+                      <div className="relative hidden md:block">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 opacity-50" />
+                        <Input
+                          placeholder="Search..."
+                          className="w-64 pl-9 h-9"
+                          style={{ backgroundColor: theme.colors.muted, borderColor: "transparent" }}
+                        />
+                      </div>
+                      <Button variant="ghost" size="icon" className="rounded-full">
+                        <HelpCircle className="h-5 w-5 opacity-70" />
                       </Button>
-                      <nav className="space-y-1">
-                        {[
-                          { icon: LayoutDashboard, label: "Dashboard", active: true },
-                          { icon: TrendingUp, label: "Lifecycle" },
-                          { icon: BarChart3, label: "Analytics" },
-                          { icon: FolderKanban, label: "Projects" },
-                          { icon: Users, label: "Team" },
-                        ].map((item) => (
-                          <Button key={item.label} variant={item.active ? "default" : "ghost"} className="w-full justify-start gap-3">
-                            <item.icon className="h-4 w-4" /> {item.label}
+                      <Button variant="ghost" size="icon" className="rounded-full relative">
+                        <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500" />
+                        <Settings className="h-5 w-5 opacity-70" />
+                      </Button>
+                      <div className="h-8 w-8 rounded-full border overflow-hidden" style={{ borderColor: theme.colors.border }}>
+                        <img src="https://github.com/shadcn.png" alt="User" className="h-full w-full object-cover" />
+                      </div>
+                    </div>
+                  </header>
+
+                  <div className="flex flex-1 overflow-hidden">
+                    {/* Sidebar */}
+                    <aside className="w-64 flex flex-col border-r hidden md:flex" style={{ backgroundColor: theme.colors.muted, borderColor: theme.colors.border }}>
+                      <div className="p-4 space-y-6 flex-1 overflow-y-auto">
+                        <div className="space-y-1">
+                          <p className="px-2 text-xs font-semibold uppercase tracking-wider opacity-50 mb-2" style={{ fontFamily: theme.fonts.sans }}>Platform</p>
+                          <Button variant="secondary" className="w-full justify-start gap-3 shadow-sm">
+                            <LayoutDashboard className="h-4 w-4" /> Dashboard
                           </Button>
-                        ))}
-                      </nav>
-                    </div>
-                  </aside>
-                  {/* Main Content */}
-                  <div className="flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: theme.colors.background }}>
-                    <header className="h-14 flex items-center justify-between px-6 border-b" style={{ borderColor: theme.colors.border }}>
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-5 w-5" />
-                        <h1 className="text-lg font-semibold" style={{ fontFamily: theme.fonts.sans }}>Documents</h1>
+                          <Button variant="ghost" className="w-full justify-start gap-3 opacity-70 hover:opacity-100">
+                            <BarChart3 className="h-4 w-4" /> Analytics
+                          </Button>
+                          <Button variant="ghost" className="w-full justify-start gap-3 opacity-70 hover:opacity-100">
+                            <Users className="h-4 w-4" /> Customers
+                          </Button>
+                          <Button variant="ghost" className="w-full justify-start gap-3 opacity-70 hover:opacity-100">
+                            <FolderKanban className="h-4 w-4" /> Projects
+                          </Button>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="px-2 text-xs font-semibold uppercase tracking-wider opacity-50 mb-2" style={{ fontFamily: theme.fonts.sans }}>Finance</p>
+                          <Button variant="ghost" className="w-full justify-start gap-3 opacity-70 hover:opacity-100">
+                            <TrendingUp className="h-4 w-4" /> Transactions
+                          </Button>
+                          <Button variant="ghost" className="w-full justify-start gap-3 opacity-70 hover:opacity-100">
+                            <FileText className="h-4 w-4" /> Invoices
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="secondary" size="sm">Filter</Button>
-                        <Button variant="secondary" size="sm">Sort</Button>
-                      </div>
-                    </header>
-                    <div className="flex-1 overflow-y-auto p-6">
-                      <div className="grid grid-cols-3 gap-4 mb-6">
-                        <Card>
-                          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium opacity-70">Total Revenue</CardTitle></CardHeader>
-                          <CardContent><div className="text-3xl font-bold mb-2" style={{ fontFamily: theme.fonts.sans }}>$1,250.00</div></CardContent>
-                        </Card>
-                        <Card>
-                          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium opacity-70">New Customers</CardTitle></CardHeader>
-                          <CardContent><div className="text-3xl font-bold mb-2" style={{ fontFamily: theme.fonts.sans }}>1,234</div></CardContent>
-                        </Card>
-                        <Card>
-                          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium opacity-70">Active Accounts</CardTitle></CardHeader>
-                          <CardContent><div className="text-3xl font-bold mb-2" style={{ fontFamily: theme.fonts.sans }}>45,678</div></CardContent>
-                        </Card>
-                      </div>
-                      <Card>
-                        <CardHeader><CardTitle style={{ fontFamily: theme.fonts.sans }}>Total Visitors</CardTitle></CardHeader>
-                        <CardContent>
-                          <div className="h-64 flex items-end justify-between gap-2">
-                            {Array.from({ length: 12 }).map((_, i) => (
-                              <div key={i} className="flex-1 flex items-end">
-                                <div 
-                                  className="w-full rounded-t" 
-                                  style={{ 
-                                    height: barHeights[i] ? `${barHeights[i]}%` : '20%', 
-                                    backgroundColor: theme.colors.primary, 
-                                    borderRadius: `${theme.radius}px ${theme.radius}px 0 0` 
-                                  }} 
-                                />
-                              </div>
-                            ))}
+
+                      <div className="p-4 border-t" style={{ borderColor: theme.colors.border }}>
+                        <div className="rounded-lg p-3 bg-black/5 dark:bg-white/5">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.colors.primary, color: theme.colors.primaryForeground }}>
+                              <span className="text-xs font-bold">Pro</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">Pro Plan</p>
+                              <p className="text-xs opacity-60">Expires in 12 days</p>
+                            </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </div>
+                          <Button size="sm" className="w-full text-xs h-7">Upgrade</Button>
+                        </div>
+                      </div>
+                    </aside>
+
+                    {/* Main Content */}
+                    <main className="flex-1 overflow-y-auto bg-opacity-50" style={{ backgroundColor: theme.colors.background }}>
+                      <div className="p-8 space-y-8">
+                        {/* Page Header */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h2 className="text-2xl font-bold tracking-tight" style={{ fontFamily: theme.fonts.heading || theme.fonts.sans }}>Dashboard</h2>
+                            <p className="text-muted-foreground">Overview of your project performance.</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" className="gap-2">
+                              <Search className="h-4 w-4" /> Filter
+                            </Button>
+                            <Button size="sm" className="gap-2">
+                              <Plus className="h-4 w-4" /> New Project
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          {[
+                            { label: "Total Revenue", value: "$45,231.89", change: "+20.1%", icon: TrendingUp },
+                            { label: "Subscriptions", value: "+2350", change: "+180.1%", icon: Users },
+                            { label: "Sales", value: "+12,234", change: "+19%", icon: BarChart3 },
+                            { label: "Active Now", value: "+573", change: "+201", icon: LayoutDashboard },
+                          ].map((stat, i) => (
+                            <Card key={i}>
+                              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium opacity-70">{stat.label}</CardTitle>
+                                <stat.icon className="h-4 w-4 opacity-50" />
+                              </CardHeader>
+                              <CardContent>
+                                <div className="text-2xl font-bold" style={{ fontFamily: theme.fonts.sans }}>{stat.value}</div>
+                                <p className="text-xs opacity-60 mt-1">
+                                  <span className="text-green-500 font-medium">{stat.change}</span> from last month
+                                </p>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+                          {/* Main Chart */}
+                          <Card className="col-span-4">
+                            <CardHeader>
+                              <CardTitle style={{ fontFamily: theme.fonts.sans }}>Overview</CardTitle>
+                              <CardDescription>Monthly revenue breakdown for the current year.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="pl-2">
+                              <div className="h-[300px] flex items-end justify-between gap-2 px-2">
+                                {Array.from({ length: 12 }).map((_, i) => (
+                                  <div key={i} className="flex-1 flex flex-col justify-end gap-2 group">
+                                    <div
+                                      className="w-full rounded-t transition-all duration-500 group-hover:opacity-80 relative"
+                                      style={{
+                                        height: barHeights[i] ? `${barHeights[i]}%` : '20%',
+                                        backgroundColor: theme.colors.primary,
+                                        borderRadius: `${theme.radius.small} ${theme.radius.small} 0 0`
+                                      }}
+                                    >
+                                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                        ${Math.floor(Math.random() * 5000) + 1000}
+                                      </div>
+                                    </div>
+                                    <div className="text-[10px] text-center opacity-50 uppercase">
+                                      {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i]}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* Recent Sales */}
+                          <Card className="col-span-3">
+                            <CardHeader>
+                              <CardTitle style={{ fontFamily: theme.fonts.sans }}>Recent Sales</CardTitle>
+                              <CardDescription>You made 265 sales this month.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-6">
+                                {[
+                                  { name: "Olivia Martin", email: "olivia.martin@email.com", amount: "+$1,999.00" },
+                                  { name: "Jackson Lee", email: "jackson.lee@email.com", amount: "+$39.00" },
+                                  { name: "Isabella Nguyen", email: "isabella.nguyen@email.com", amount: "+$299.00" },
+                                  { name: "William Kim", email: "will@email.com", amount: "+$99.00" },
+                                  { name: "Sofia Davis", email: "sofia.davis@email.com", amount: "+$39.00" },
+                                ].map((sale, i) => (
+                                  <div key={i} className="flex items-center">
+                                    <div className="h-9 w-9 rounded-full border flex items-center justify-center font-medium text-xs mr-4" style={{ backgroundColor: theme.colors.muted, borderColor: theme.colors.border }}>
+                                      {sale.name.split(' ').map(n => n[0]).join('')}
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-medium leading-none">{sale.name}</p>
+                                      <p className="text-xs text-muted-foreground">{sale.email}</p>
+                                    </div>
+                                    <div className="ml-auto font-medium" style={{ fontFamily: theme.fonts.mono }}>{sale.amount}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
+                    </main>
                   </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="pricing" className="mt-0">
-                <div className="grid grid-cols-3 gap-6">
-                  {["Free", "Pro", "Enterprise"].map((tier, i) => (
-                    <Card key={tier} className={i === 1 ? "border-2 border-primary" : ""}>
-                      <CardHeader>
-                        <CardTitle style={{ fontFamily: theme.fonts.sans }}>{tier}</CardTitle>
-                        <CardDescription><span className="text-3xl font-bold text-foreground" style={{ fontFamily: theme.fonts.sans }}>${i * 10}</span>/month</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-2 mb-6">
-                          {["Feature 1", "Feature 2", "Feature 3"].map((feature) => (
-                            <li key={feature} className="text-sm flex items-center" style={{ fontFamily: theme.fonts.sans }}><span className="mr-2">✓</span>{feature}</li>
-                          ))}
-                        </ul>
-                        <Button className="w-full" variant={i === 1 ? "default" : "secondary"}>Get Started</Button>
-                      </CardContent>
-                    </Card>
-                  ))}
+              <TabsContent value="pricing" className="mt-0 h-full">
+                <div className="flex flex-col h-full rounded-lg overflow-y-auto border shadow-xl" style={{ backgroundColor: theme.colors.background, borderColor: theme.colors.border }}>
+                  {/* Navbar Placeholder */}
+                  <header className="h-16 border-b flex items-center justify-between px-6 shrink-0" style={{ backgroundColor: theme.colors.background, borderColor: theme.colors.border }}>
+                    <div className="flex items-center gap-2 font-bold text-xl" style={{ color: theme.colors.primary }}>
+                      <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: theme.colors.primary, color: theme.colors.primaryForeground }}>
+                        <span style={{ fontFamily: theme.fonts.heading || theme.fonts.sans }}>N</span>
+                      </div>
+                      <span style={{ fontFamily: theme.fonts.heading || theme.fonts.sans }}>Nexus</span>
+                    </div>
+                    <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+                      <a href="#" className="opacity-70 hover:opacity-100">Features</a>
+                      <a href="#" className="opacity-70 hover:opacity-100">Testimonials</a>
+                      <a href="#" className="opacity-100">Pricing</a>
+                    </nav>
+                    <div className="flex items-center gap-4">
+                      <Button variant="ghost" size="sm">Log in</Button>
+                      <Button size="sm">Get Started</Button>
+                    </div>
+                  </header>
+
+                  <main className="flex-1 p-8 md:p-12">
+                    {/* Header Section */}
+                    <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
+                      <h2 className="text-3xl md:text-5xl font-bold tracking-tight" style={{ fontFamily: theme.fonts.heading || theme.fonts.sans }}>
+                        Simple, transparent pricing
+                      </h2>
+                      <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                        Choose the plan that's right for you. All plans include a 14-day free trial. No credit card required.
+                      </p>
+
+                      {/* Billing Toggle */}
+                      <div className="flex items-center justify-center gap-4 mt-8">
+                        <span className="text-sm font-medium opacity-70">Monthly</span>
+                        <Switch />
+                        <span className="text-sm font-medium">Yearly <span className="text-xs text-green-500 font-bold ml-1">SAVE 20%</span></span>
+                      </div>
+                    </div>
+
+                    {/* Pricing Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
+                      {[
+                        {
+                          name: "Starter",
+                          price: "$0",
+                          desc: "Perfect for side projects",
+                          features: ["Up to 3 projects", "Community support", "1GB storage", "Basic analytics"]
+                        },
+                        {
+                          name: "Pro",
+                          price: "$29",
+                          desc: "For growing teams",
+                          popular: true,
+                          features: ["Unlimited projects", "Priority support", "10GB storage", "Advanced analytics", "Custom domains", "Team collaboration"]
+                        },
+                        {
+                          name: "Enterprise",
+                          price: "$99",
+                          desc: "For large organizations",
+                          features: ["Unlimited everything", "24/7 Phone support", "Unlimited storage", "Custom reporting", "SSO & Audit logs", "Dedicated account manager"]
+                        },
+                      ].map((tier, i) => (
+                        <Card key={tier.name} className={`relative flex flex-col ${tier.popular ? 'border-2 shadow-lg scale-105 z-10' : ''}`} style={{ borderColor: tier.popular ? theme.colors.primary : theme.colors.border }}>
+                          {tier.popular && (
+                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: theme.colors.primary, color: theme.colors.primaryForeground }}>
+                              Most Popular
+                            </div>
+                          )}
+                          <CardHeader>
+                            <CardTitle className="text-xl" style={{ fontFamily: theme.fonts.sans }}>{tier.name}</CardTitle>
+                            <CardDescription>{tier.desc}</CardDescription>
+                            <div className="mt-4 flex items-baseline gap-1">
+                              <span className="text-4xl font-bold" style={{ fontFamily: theme.fonts.sans }}>{tier.price}</span>
+                              <span className="text-muted-foreground">/month</span>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="flex-1">
+                            <ul className="space-y-3 mb-6">
+                              {tier.features.map((feature) => (
+                                <li key={feature} className="text-sm flex items-start gap-3">
+                                  <div className="h-5 w-5 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: theme.colors.primary + '20', color: theme.colors.primary }}>
+                                    <span className="text-[10px]">✓</span>
+                                  </div>
+                                  <span className="opacity-80">{feature}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </CardContent>
+                          <div className="p-6 pt-0 mt-auto">
+                            <Button className="w-full" variant={tier.popular ? "default" : "outline"}>
+                              {tier.price === "$0" ? "Start for free" : "Get started"}
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+
+                    {/* FAQ Section */}
+                    <div className="max-w-3xl mx-auto">
+                      <h3 className="text-2xl font-bold text-center mb-8" style={{ fontFamily: theme.fonts.heading || theme.fonts.sans }}>
+                        Frequently Asked Questions
+                      </h3>
+                      <Accordion type="single" collapsible className="w-full">
+                        {[
+                          { q: "Can I cancel my subscription at any time?", a: "Yes, you can cancel your plan at any time from your account settings. You will continue to have access until the end of your billing cycle." },
+                          { q: "What happens when my trial ends?", a: "If you haven't upgraded to a paid plan by the end of your trial, your account will automatically be downgraded to the Free plan." },
+                          { q: "Do you offer discounts for non-profits?", a: "Yes, we offer a 50% discount for registered non-profit organizations. Please contact our sales team for more information." },
+                          { q: "Is my data secure?", a: "Absolutely. We use industry-standard encryption to protect your data. We are SOC 2 Type II compliant and regularly undergo security audits." },
+                        ].map((faq, i) => (
+                          <AccordionItem key={i} value={`item-${i}`}>
+                            <AccordionTrigger className="text-left">{faq.q}</AccordionTrigger>
+                            <AccordionContent className="text-muted-foreground">
+                              {faq.a}
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    </div>
+
+                    {/* Footer Placeholder */}
+                    <footer className="mt-20 pt-8 border-t text-center text-sm text-muted-foreground" style={{ borderColor: theme.colors.border }}>
+                      <div className="flex justify-center gap-6 mb-4">
+                        <a href="#" className="hover:text-foreground">Terms</a>
+                        <a href="#" className="hover:text-foreground">Privacy</a>
+                        <a href="#" className="hover:text-foreground">Cookies</a>
+                        <a href="#" className="hover:text-foreground">Contact</a>
+                      </div>
+                      <p>© 2024 Nexus Inc. All rights reserved.</p>
+                    </footer>
+                  </main>
                 </div>
               </TabsContent>
             </div>

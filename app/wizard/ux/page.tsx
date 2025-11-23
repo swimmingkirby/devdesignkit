@@ -26,30 +26,30 @@ export default function UxPage() {
     }
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 text-white">
             <div className="text-center space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">Refine the Experience</h1>
-                <p className="text-muted-foreground text-lg">
+                <p className="text-gray-400 text-lg">
                     Add premium polish and interaction details to your product.
                 </p>
             </div>
 
             <div className="grid gap-6">
                 {/* Microinteractions */}
-                <Card className="p-6 rounded-xl">
+                <Card className="p-6 rounded-none bg-[#1E1E1E] border-[#444]">
                     <div className="flex items-start gap-4">
-                        <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                        <div className="p-2 bg-blue-500/10 rounded-md text-blue-500">
                             <MousePointer2 className="h-6 w-6" />
                         </div>
                         <div className="flex-1 space-y-4">
                             <div>
-                                <h3 className="text-lg font-semibold">Microinteractions</h3>
-                                <p className="text-sm text-muted-foreground">Subtle animations that improve feel.</p>
+                                <h3 className="text-lg font-semibold text-gray-200">Microinteractions</h3>
+                                <p className="text-sm text-gray-400">Subtle animations that improve feel.</p>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="micro-1" className="flex-1 cursor-pointer">Smooth transitions on dialogs and sheets</Label>
+                                    <Label htmlFor="micro-1" className="flex-1 cursor-pointer text-gray-300">Smooth transitions on dialogs and sheets</Label>
                                     <Switch
                                         id="micro-1"
                                         checked={ux.smoothTransitions}
@@ -57,7 +57,7 @@ export default function UxPage() {
                                     />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="micro-2" className="flex-1 cursor-pointer">Button press micro-animation</Label>
+                                    <Label htmlFor="micro-2" className="flex-1 cursor-pointer text-gray-300">Button press micro-animation</Label>
                                     <Switch
                                         id="micro-2"
                                         checked={ux.buttonMicroAnimations}
@@ -65,7 +65,7 @@ export default function UxPage() {
                                     />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="micro-3" className="flex-1 cursor-pointer">Card hover lift</Label>
+                                    <Label htmlFor="micro-3" className="flex-1 cursor-pointer text-gray-300">Card hover lift</Label>
                                     <Switch
                                         id="micro-3"
                                         checked={ux.cardHoverLift}
@@ -78,20 +78,20 @@ export default function UxPage() {
                 </Card>
 
                 {/* Interaction Cues */}
-                <Card className="p-6 rounded-xl">
+                <Card className="p-6 rounded-none bg-[#1E1E1E] border-[#444]">
                     <div className="flex items-start gap-4">
-                        <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                        <div className="p-2 bg-blue-500/10 rounded-md text-blue-500">
                             <Eye className="h-6 w-6" />
                         </div>
                         <div className="flex-1 space-y-4">
                             <div>
-                                <h3 className="text-lg font-semibold">Interaction Cues</h3>
-                                <p className="text-sm text-muted-foreground">Visual feedback for user actions.</p>
+                                <h3 className="text-lg font-semibold text-gray-200">Interaction Cues</h3>
+                                <p className="text-sm text-gray-400">Visual feedback for user actions.</p>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="cue-1" className="flex-1 cursor-pointer">Focus glow for keyboard users</Label>
+                                    <Label htmlFor="cue-1" className="flex-1 cursor-pointer text-gray-300">Focus glow for keyboard users</Label>
                                     <Switch
                                         id="cue-1"
                                         checked={ux.focusGlow}
@@ -99,7 +99,7 @@ export default function UxPage() {
                                     />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="cue-2" className="flex-1 cursor-pointer">Animated active-tab indicator</Label>
+                                    <Label htmlFor="cue-2" className="flex-1 cursor-pointer text-gray-300">Animated active-tab indicator</Label>
                                     <Switch
                                         id="cue-2"
                                         checked={ux.activeTabMotion}
@@ -107,7 +107,7 @@ export default function UxPage() {
                                     />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="cue-3" className="flex-1 cursor-pointer">Scroll boundary fades</Label>
+                                    <Label htmlFor="cue-3" className="flex-1 cursor-pointer text-gray-300">Scroll boundary fades</Label>
                                     <Switch
                                         id="cue-3"
                                         checked={ux.scrollBoundaryFades}
@@ -120,20 +120,20 @@ export default function UxPage() {
                 </Card>
 
                 {/* Visual Quality */}
-                <Card className="p-6 rounded-xl">
+                <Card className="p-6 rounded-none bg-[#1E1E1E] border-[#444]">
                     <div className="flex items-start gap-4">
-                        <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                        <div className="p-2 bg-blue-500/10 rounded-md text-blue-500">
                             <Sparkles className="h-6 w-6" />
                         </div>
                         <div className="flex-1 space-y-4">
                             <div>
-                                <h3 className="text-lg font-semibold">Visual Quality</h3>
-                                <p className="text-sm text-muted-foreground">Refinements for a premium look.</p>
+                                <h3 className="text-lg font-semibold text-gray-200">Visual Quality</h3>
+                                <p className="text-sm text-gray-400">Refinements for a premium look.</p>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="vis-1" className="flex-1 cursor-pointer">Layered depth shadows</Label>
+                                    <Label htmlFor="vis-1" className="flex-1 cursor-pointer text-gray-300">Layered depth shadows</Label>
                                     <Switch
                                         id="vis-1"
                                         checked={ux.depthShadows}
@@ -141,7 +141,7 @@ export default function UxPage() {
                                     />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="vis-2" className="flex-1 cursor-pointer">Clean heading hierarchy</Label>
+                                    <Label htmlFor="vis-2" className="flex-1 cursor-pointer text-gray-300">Clean heading hierarchy</Label>
                                     <Switch
                                         id="vis-2"
                                         checked={ux.headingHierarchy}
@@ -149,7 +149,7 @@ export default function UxPage() {
                                     />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="vis-3" className="flex-1 cursor-pointer">Relaxed reading line-height</Label>
+                                    <Label htmlFor="vis-3" className="flex-1 cursor-pointer text-gray-300">Relaxed reading line-height</Label>
                                     <Switch
                                         id="vis-3"
                                         checked={ux.relaxedLineHeight}
@@ -157,7 +157,7 @@ export default function UxPage() {
                                     />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="vis-4" className="flex-1 cursor-pointer">Consistent section spacing rhythm</Label>
+                                    <Label htmlFor="vis-4" className="flex-1 cursor-pointer text-gray-300">Consistent section spacing rhythm</Label>
                                     <Switch
                                         id="vis-4"
                                         checked={ux.sectionSpacingRhythm}
@@ -170,10 +170,11 @@ export default function UxPage() {
                 </Card>
             </div>
 
-            <div className="flex justify-between pt-6 items-center">
+            <div className="flex justify-between pt-6 items-center border-t border-[#444]">
                 <Button
                     variant="ghost"
                     onClick={() => router.push("/wizard/theme")}
+                    className="text-gray-400 hover:text-white hover:bg-[#333] rounded-md"
                 >
                     Back
                 </Button>
@@ -181,14 +182,14 @@ export default function UxPage() {
                     <Button
                         variant="ghost"
                         onClick={handleContinue}
-                        className="text-muted-foreground hover:text-foreground"
+                        className="text-gray-400 hover:text-white hover:bg-[#333] rounded-md"
                     >
                         Skip
                     </Button>
                     <Button
                         size="lg"
                         onClick={handleContinue}
-                        className="w-full md:w-auto min-w-[200px]"
+                        className="w-full md:w-auto min-w-[200px] bg-blue-600 hover:bg-blue-700 text-white rounded-md"
                     >
                         {fromInspiration ? "Generate Theme" : "Enter Customizer"}
                     </Button>

@@ -6,8 +6,7 @@ import { usePathname } from "next/navigation"
 
 const steps = [
     { id: "product", label: "Product", path: "/wizard/product" },
-    { id: "source", label: "Source", path: "/wizard/source" },
-    { id: "theme", label: "Look", path: "/wizard/theme" },
+    { id: "source", label: "Look", path: "/wizard/source" },
     { id: "ux", label: "Experience", path: "/wizard/ux" },
     { id: "customizer", label: "Customize", path: "/customizer" },
 ]

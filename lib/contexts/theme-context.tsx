@@ -47,8 +47,14 @@ const defaultTheme: ThemeTokens = {
 
 interface ThemeContextType {
   theme: ThemeTokens;
-  updateTheme: (updates: Partial<ThemeTokens>) => void;
+  activeThemeId: string;
+  updateTheme: (updates: Partial<ThemeTokens>, newThemeId?: string) => void;
+  setThemeId: (id: string) => void;
   resetTheme: () => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
@@ -106,41 +112,91 @@ function applyThemeVariables(theme: ThemeTokens) {
   root.style.setProperty("--shadow-lg", theme.shadows.large)
 }
 
+interface HistoryState {
+  theme: ThemeTokens;
+  id: string;
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<ThemeTokens>(defaultTheme)
+  const [activeThemeId, setActiveThemeId] = useState<string>("minimal-light")
 
-  const updateTheme = useCallback((updates: Partial<ThemeTokens>) => {
-    console.log("🔄 ThemeContext.updateTheme called with:", updates);
-    console.trace("Call stack:"); // Show where this is being called from
-    
-    setTheme((prev) => {
+  // History stacks
+  const [history, setHistory] = useState<HistoryState[]>([])
+  const [future, setFuture] = useState<HistoryState[]>([])
+
+  const updateTheme = useCallback((updates: Partial<ThemeTokens>, newThemeId?: string) => {
+    setTheme((prevTheme) => {
+      // Save current state to history before updating
+      setHistory(prev => [...prev, { theme: prevTheme, id: activeThemeId }])
+      setFuture([]) // Clear future on new change
+
       const newTheme = {
-        ...prev,
+        ...prevTheme,
         ...updates,
-        colors: { ...prev.colors, ...updates.colors },
+        colors: { ...prevTheme.colors, ...updates.colors },
         fonts: updates.fonts ? {
-          ...prev.fonts,
+          ...prevTheme.fonts,
           ...updates.fonts,
           sizes: updates.fonts.sizes ? {
-            ...prev.fonts.sizes,
+            ...prevTheme.fonts.sizes,
             ...updates.fonts.sizes,
-          } : prev.fonts.sizes,
-        } : prev.fonts,
-        radius: updates.radius ? { ...prev.radius, ...updates.radius } : prev.radius,
-        spacing: updates.spacing ? { ...prev.spacing, ...updates.spacing } : prev.spacing,
-        shadows: updates.shadows ? { ...prev.shadows, ...updates.shadows } : prev.shadows,
+          } : prevTheme.fonts.sizes,
+        } : prevTheme.fonts,
+        radius: updates.radius ? { ...prevTheme.radius, ...updates.radius } : prevTheme.radius,
+        spacing: updates.spacing ? { ...prevTheme.spacing, ...updates.spacing } : prevTheme.spacing,
+        shadows: updates.shadows ? { ...prevTheme.shadows, ...updates.shadows } : prevTheme.shadows,
       };
-      
-      console.log("✓ New theme state:", newTheme);
-      console.log("  Primary color updated to:", newTheme.colors.primary);
-      
+
       return newTheme;
     });
+
+    if (newThemeId) {
+      setActiveThemeId(newThemeId)
+    } else {
+      // If we modify a preset, it becomes "custom" effectively, but we might want to keep the ID 
+      // if we are just tweaking it. For now, let's keep the ID unless explicitly changed.
+      // Or maybe switch to 'custom' if it's a modification? 
+      // The user didn't specify, but usually tweaking a preset makes it custom.
+      // However, for "Reset" to work, we need to know what it WAS.
+      // So let's keep the ID.
+    }
+  }, [activeThemeId])
+
+  const setThemeId = useCallback((id: string) => {
+    setActiveThemeId(id)
   }, [])
 
+  const undo = useCallback(() => {
+    if (history.length === 0) return
+
+    const previous = history[history.length - 1]
+    const newHistory = history.slice(0, -1)
+
+    setFuture(prev => [{ theme, id: activeThemeId }, ...prev])
+    setHistory(newHistory)
+    setTheme(previous.theme)
+    setActiveThemeId(previous.id)
+  }, [history, theme, activeThemeId])
+
+  const redo = useCallback(() => {
+    if (future.length === 0) return
+
+    const next = future[0]
+    const newFuture = future.slice(1)
+
+    setHistory(prev => [...prev, { theme, id: activeThemeId }])
+    setFuture(newFuture)
+    setTheme(next.theme)
+    setActiveThemeId(next.id)
+  }, [future, theme, activeThemeId])
+
   const resetTheme = useCallback(() => {
-    setTheme(defaultTheme)
-  }, [])
+    // This resets to global default. 
+    // For per-theme reset, we'll handle it in the component or pass an arg here.
+    // But to keep interface simple, let's just use updateTheme with the default tokens.
+    updateTheme(defaultTheme, "minimal-light")
+  }, [updateTheme])
 
   // Apply CSS variables whenever theme changes
   useEffect(() => {
@@ -148,7 +204,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme])
 
   return (
-    <ThemeContext.Provider value={{ theme, updateTheme, resetTheme }}>
+    <ThemeContext.Provider value={{
+      theme,
+      activeThemeId,
+      updateTheme,
+      setThemeId,
+      resetTheme,
+      undo,
+      redo,
+      canUndo: history.length > 0,
+      canRedo: future.length > 0
+    }}>
       {children}
     </ThemeContext.Provider>
   )
