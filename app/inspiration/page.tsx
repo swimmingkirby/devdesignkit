@@ -115,7 +115,7 @@ export default function InspirationPage() {
           {canUploadMore && (
             <Card
               className={`bg-[#1E1E1E] border-2 border-dashed transition-all ${isDragging
-                ? "border-blue-500 bg-[#252525]"
+                ? "border-purple-500 bg-[#252525]"
                 : "border-[#444] hover:border-[#555]"
                 }`}
               onDrop={handleDrop}

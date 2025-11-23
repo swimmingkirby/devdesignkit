@@ -28,7 +28,19 @@ export function CustomizerHeader() {
                 .toLowerCase()
                 .replace(/\s+/g, '-')
 
-            const blob = await buildThemeZip(theme, themeName)
+            // Get UX settings from localStorage (wizard state)
+            let uxSettings = undefined
+            try {
+                const wizardState = localStorage.getItem("wizard-state")
+                if (wizardState) {
+                    const parsed = JSON.parse(wizardState)
+                    uxSettings = parsed.ux
+                }
+            } catch (e) {
+                console.warn("Could not load UX settings:", e)
+            }
+
+            const blob = await buildThemeZip(theme, themeName, uxSettings)
             saveAs(blob, `${themeName}.zip`)
 
             setExportSuccess(true)
@@ -83,14 +95,18 @@ export function CustomizerHeader() {
 
                     <div className="space-y-4 py-4">
                         <div className="text-sm text-gray-300">
-                            <p className="mb-2">Your export will include:</p>
+                            <p className="mb-3">Your export will include:</p>
                             <ul className="list-disc list-inside space-y-1 text-gray-400">
-                                <li>CSS variables and tokens</li>
-                                <li>Tailwind configuration</li>
-                                <li>Font imports</li>
-                                <li>Preview HTML</li>
+                                <li>Full design-system.json</li>
+                                <li>CSS variables (tokens.css + fonts.css)</li>
+                                <li>Tailwind configuration extension</li>
                                 <li>Shadcn component overrides</li>
+                                <li>Preview HTML file</li>
+                                <li>UX Guidelines</li>
                             </ul>
+                            <p className="mt-3 text-xs text-gray-500">
+                                The UX Guidelines file summarizes your selected UX enhancements and provides lightweight recommendations for maintaining consistent interaction patterns.
+                            </p>
                         </div>
 
                         {exportSuccess ? (

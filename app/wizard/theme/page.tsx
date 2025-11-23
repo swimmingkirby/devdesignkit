@@ -131,7 +131,7 @@ export default function ThemePage() {
                                     />
                                     <Label
                                         htmlFor={aesthetic.id}
-                                        className="flex items-center justify-between rounded-none border border-[#444] bg-[#1E1E1E] p-4 hover:bg-[#252525] peer-data-[state=checked]:border-blue-500 peer-data-[state=checked]:bg-[#252525] cursor-pointer transition-all"
+                                        className="flex items-center justify-between rounded-none border border-[#444] bg-[#1E1E1E] p-4 hover:bg-[#252525] peer-data-[state=checked]:border-purple-500 peer-data-[state=checked]:bg-[#252525] cursor-pointer transition-all"
                                     >
                                         <div className="flex items-center gap-3">
                                             <div
@@ -141,7 +141,7 @@ export default function ThemePage() {
                                             <span className="font-medium text-gray-200">{aesthetic.name}</span>
                                         </div>
                                         {selectedAesthetic === aesthetic.id && (
-                                            <Check className="h-4 w-4 text-blue-500" />
+                                            <Check className="h-4 w-4 text-purple-500" />
                                         )}
                                     </Label>
                                 </div>
@@ -164,8 +164,8 @@ export default function ThemePage() {
                             <Card
                                 key={theme.id}
                                 className={cn(
-                                    "cursor-pointer transition-all hover:border-blue-500/50 overflow-hidden relative group rounded-none bg-[#1E1E1E]",
-                                    selectedThemeId === theme.id ? "border-blue-500 ring-1 ring-blue-500 shadow-md" : "border-[#444]"
+                                    "cursor-pointer transition-all hover:border-purple-500/50 overflow-hidden relative group rounded-none bg-[#1E1E1E]",
+                                    selectedThemeId === theme.id ? "border-purple-500 ring-1 ring-purple-500 shadow-md" : "border-[#444]"
                                 )}
                                 onClick={() => setSelectedThemeId(theme.id)}
                             >
@@ -188,7 +188,7 @@ export default function ThemePage() {
                                         <div className="flex items-center justify-between">
                                             <span className="font-semibold text-gray-200">{theme.name}</span>
                                             {selectedThemeId === theme.id && (
-                                                <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
+                                                <div className="h-5 w-5 rounded-full bg-purple-500 flex items-center justify-center">
                                                     <Check className="h-3 w-3 text-white" />
                                                 </div>
                                             )}

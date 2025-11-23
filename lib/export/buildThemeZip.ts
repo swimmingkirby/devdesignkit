@@ -7,8 +7,9 @@ import { generateTailwind } from "./generators/generateTailwind"
 import { generateReadme } from "./generators/generateReadme"
 import { generatePreview } from "./generators/generatePreview"
 import { generateShadcn } from "./generators/generateShadcn"
+import { generateUxGuidelines } from "./generators/generateUxGuidelines"
 
-export async function buildThemeZip(themeInput: any, themeName: string = "my-theme"): Promise<Blob> {
+export async function buildThemeZip(themeInput: any, themeName: string = "my-theme", uxSettings?: any): Promise<Blob> {
     const zip = new JSZip()
     const folder = zip.folder(themeName) || zip
 
@@ -22,6 +23,7 @@ export async function buildThemeZip(themeInput: any, themeName: string = "my-the
     folder.file("tailwind-theme-extension.js", generateTailwind(tokens))
     folder.file("README.md", generateReadme(themeName))
     folder.file("preview.html", generatePreview(tokens, themeName))
+    folder.file("ux-guidelines.md", generateUxGuidelines(uxSettings))
 
     // 3. Shadcn Overrides
     const shadcnFolder = folder.folder("shadcn-overrides")

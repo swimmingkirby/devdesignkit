@@ -68,12 +68,12 @@ export default function ProductPage() {
                                 key={type.id}
                                 className={cn(
                                     "cursor-pointer p-6 flex flex-col items-center gap-4 transition-all hover:bg-[#252525] border-[#444] bg-[#1E1E1E] rounded-none",
-                                    isSelected && "border-blue-500 bg-[#252525] ring-1 ring-blue-500"
+                                    isSelected && "border-purple-500 bg-[#252525] ring-1 ring-purple-500"
                                 )}
                                 onClick={() => setProduct({ type: type.id })}
                             >
-                                <Icon className={cn("h-10 w-10", isSelected ? "text-blue-500" : "text-gray-400")} />
-                                <span className={cn("font-medium text-lg", isSelected ? "text-blue-500" : "text-gray-200")}>{type.label}</span>
+                                <Icon className={cn("h-10 w-10", isSelected ? "text-purple-500" : "text-gray-400")} />
+                                <span className={cn("font-medium text-lg", isSelected ? "text-purple-500" : "text-gray-200")}>{type.label}</span>
                             </Card>
                         )
                     })}

@@ -38,7 +38,7 @@ export default function UxPage() {
                 {/* Microinteractions */}
                 <Card className="p-6 rounded-none bg-[#1E1E1E] border-[#444]">
                     <div className="flex items-start gap-4">
-                        <div className="p-2 bg-blue-500/10 rounded-md text-blue-500">
+                        <div className="p-2 bg-purple-500/10 rounded-md text-purple-500">
                             <MousePointer2 className="h-6 w-6" />
                         </div>
                         <div className="flex-1 space-y-4">
@@ -80,7 +80,7 @@ export default function UxPage() {
                 {/* Interaction Cues */}
                 <Card className="p-6 rounded-none bg-[#1E1E1E] border-[#444]">
                     <div className="flex items-start gap-4">
-                        <div className="p-2 bg-blue-500/10 rounded-md text-blue-500">
+                        <div className="p-2 bg-purple-500/10 rounded-md text-purple-500">
                             <Eye className="h-6 w-6" />
                         </div>
                         <div className="flex-1 space-y-4">
@@ -122,7 +122,7 @@ export default function UxPage() {
                 {/* Visual Quality */}
                 <Card className="p-6 rounded-none bg-[#1E1E1E] border-[#444]">
                     <div className="flex items-start gap-4">
-                        <div className="p-2 bg-blue-500/10 rounded-md text-blue-500">
+                        <div className="p-2 bg-purple-500/10 rounded-md text-purple-500">
                             <Sparkles className="h-6 w-6" />
                         </div>
                         <div className="flex-1 space-y-4">

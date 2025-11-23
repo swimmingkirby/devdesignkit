@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#2C2C2C] text-white flex flex-col font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#2C2C2C] text-white flex flex-col font-sans selection:bg-purple-500/30">
       {/* Top Bar */}
       <CustomizerHeader />
 
@@ -20,7 +20,7 @@ export default function Home() {
         <div className="flex-1 space-y-8 max-w-2xl text-center lg:text-left">
 
           {/* Badge / Label */}
-          <div className="inline-flex items-center border border-purple-500/30 bg-blue-500/10 px-3 py-1 text-sm font-medium text-blue-400 mb-4">
+          <div className="inline-flex items-center border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-sm font-medium text-purple-400 mb-4">
             <Wand2 className="mr-2 h-3.5 w-3.5" />
             AI-Powered Design System
           </div>
@@ -49,19 +49,19 @@ export default function Home() {
           {/* Feature Bullets */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-8 text-sm text-gray-400">
             <div className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-blue-500" />
+              <Check className="h-4 w-4 text-purple-500" />
               AI-powered theme generation
             </div>
             <div className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-blue-500" />
+              <Check className="h-4 w-4 text-purple-500" />
               Guided design system wizard
             </div>
             <div className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-blue-500" />
+              <Check className="h-4 w-4 text-purple-500" />
               Real-time component preview
             </div>
             <div className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-blue-500" />
+              <Check className="h-4 w-4 text-purple-500" />
               Export-ready design tokens
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function Home() {
                     <Label className="text-gray-300">Email Address</Label>
                     <Input
                       placeholder="Enter your email"
-                      className="bg-[#1E1E1E] border-[#444] text-gray-300 focus-visible:ring-blue-500/50 rounded-none"
+                      className="bg-[#1E1E1E] border-[#444] text-gray-300 focus-visible:ring-purple-500/50 rounded-none"
                       readOnly
                     />
                   </div>

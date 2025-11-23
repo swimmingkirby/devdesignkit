@@ -73,7 +73,7 @@ export default function SourcePage() {
                             key={option.id}
                             className={cn(
                                 "cursor-pointer transition-all hover:bg-[#252525] relative group rounded-none bg-[#1E1E1E]",
-                                isSelected ? "border-blue-500 ring-1 ring-blue-500 shadow-lg" : "border-[#444]"
+                                isSelected ? "border-purple-500 ring-1 ring-purple-500 shadow-lg" : "border-[#444]"
                             )}
                             onClick={() => setSelectedSource(option.id)}
                         >
@@ -106,11 +106,11 @@ export default function SourcePage() {
                                         <div key={index} className="flex items-start gap-2 text-sm text-gray-400">
                                             <div className={cn(
                                                 "mt-0.5 h-4 w-4 rounded-full flex items-center justify-center shrink-0",
-                                                isSelected ? "bg-blue-500/10" : "bg-[#333]"
+                                                isSelected ? "bg-purple-500/10" : "bg-[#333]"
                                             )}>
                                                 <div className={cn(
                                                     "h-1.5 w-1.5 rounded-full",
-                                                    isSelected ? "bg-blue-500" : "bg-gray-500"
+                                                    isSelected ? "bg-purple-500" : "bg-gray-500"
                                                 )} />
                                             </div>
                                             <span>{feature}</span>

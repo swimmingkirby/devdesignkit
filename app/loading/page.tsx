@@ -57,7 +57,7 @@ export default function LoadingPage() {
           {/* Spinner */}
           <div className="relative w-16 h-16">
             <div className="absolute inset-0 border-4 border-[#444] rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-transparent border-t-blue-600 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 border-4 border-transparent border-t-purple-600 rounded-full animate-spin"></div>
           </div>
 
           {/* Loading Messages */}
@@ -71,4 +71,3 @@ export default function LoadingPage() {
     </div>
   )
 }
-

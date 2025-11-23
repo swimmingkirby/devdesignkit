@@ -249,7 +249,7 @@ export default function InformationScraper() {
                       onChange={(e) => setUrl(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleHybridScrape()}
                       disabled={loading}
-                      className="flex-1 bg-[#252525] border-[#444] text-white rounded-none focus-visible:ring-blue-500"
+                      className="flex-1 bg-[#252525] border-[#444] text-white rounded-none focus-visible:ring-purple-500"
                     />
                     <Button onClick={handleHybridScrape} disabled={loading || !url} className="bg-purple-600 hover:bg-purple-700 text-white rounded-md">
                       {loading ? (
@@ -262,8 +262,8 @@ export default function InformationScraper() {
                       )}
                     </Button>
                   </div>
-                  <div className="rounded-none bg-blue-500/10 border border-blue-500/20 p-4">
-                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-2 text-blue-400">
+                  <div className="rounded-none bg-purple-500/10 border border-purple-500/20 p-4">
+                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-2 text-purple-400">
                       <Combine className="h-4 w-4" />
                       Hybrid Approach (Recommended)
                     </h4>
@@ -287,7 +287,7 @@ export default function InformationScraper() {
                       onChange={(e) => setUrl(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleScrape()}
                       disabled={loading}
-                      className="flex-1 bg-[#252525] border-[#444] text-white rounded-none focus-visible:ring-blue-500"
+                      className="flex-1 bg-[#252525] border-[#444] text-white rounded-none focus-visible:ring-purple-500"
                     />
                     <Button onClick={handleScrape} disabled={loading || !url} className="bg-purple-600 hover:bg-purple-700 text-white rounded-md">
                       {loading ? (
@@ -564,7 +564,7 @@ export default function InformationScraper() {
                     }}
                     placeholder="e.g., Stripe Theme, My Custom Theme"
                     autoFocus
-                    className="bg-[#252525] border-[#444] text-white rounded-none focus-visible:ring-blue-500"
+                    className="bg-[#252525] border-[#444] text-white rounded-none focus-visible:ring-purple-500"
                   />
                 </div>
                 <div className="flex justify-end gap-2">
