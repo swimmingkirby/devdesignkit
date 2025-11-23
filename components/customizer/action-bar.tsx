@@ -2,18 +2,19 @@
 
 import * as React from "react"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RotateCcw, Share2, Save, Code, Download, Loader2 } from "lucide-react"
-import { themeLabels, ThemeKey } from "@/lib/themes"
+import { themesByAesthetic } from "@/lib/themes/aesthetic-groups"
+import { presetThemes } from "@/lib/themes/preset-themes"
 import { useScraperImport } from "@/lib/hooks/use-scraper-import"
 import { useTheme } from "@/lib/contexts/theme-context"
 
 interface ActionBarProps {
-    selectedTheme: ThemeKey
-    onThemeChange: (theme: ThemeKey) => void
+    selectedTheme: string
+    onThemeChange: (theme: string) => void
     importedThemeName?: string | null
     isImporting?: boolean
 }
@@ -53,10 +54,19 @@ export function ActionBar({ selectedTheme, onThemeChange, importedThemeName, isI
         }
     }
 
+    // Get the display name for the selected theme
+    const getSelectedThemeLabel = () => {
+        if (selectedTheme === "custom" && importedThemeName) {
+            return importedThemeName
+        }
+        const theme = presetThemes[selectedTheme]
+        return theme ? theme.name : "Select a theme"
+    }
+
     return (
         <div className="h-12 flex items-center border-b border-[#444] bg-[#2C2C2C] text-white shrink-0">
             {/* Left side - Theme Selector (aligned with sidebar width) */}
-            <div className="w-[300px] flex items-center px-6 border-r border-[#444] shrink-0 h-full">
+            <div className="w-[480px] max-w-[480px] min-w-[480px] flex items-center px-6 border-r border-[#444] shrink-0 h-full">
                 <Select 
                     value={selectedTheme} 
                     onValueChange={(value) => {
@@ -64,29 +74,43 @@ export function ActionBar({ selectedTheme, onThemeChange, importedThemeName, isI
                             console.log("🚫 ActionBar: Ignoring theme change during import");
                             return;
                         }
-                        onThemeChange(value as ThemeKey);
+                        onThemeChange(value);
                     }}
                 >
                     <SelectTrigger className="h-8 w-full bg-[#1E1E1E] border-[#444] text-white hover:bg-[#2C2C2C]">
                         <SelectValue>
-                            {selectedTheme === "custom" && importedThemeName 
-                                ? importedThemeName
-                                : themeLabels[selectedTheme] || "Select a theme"
-                            }
+                            {getSelectedThemeLabel()}
                         </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="bg-[#1E1E1E] border-[#444]">
-                        {Object.entries(themeLabels).map(([key, label]) => (
-                            <SelectItem 
-                                key={key} 
-                                value={key}
-                                className="text-white hover:bg-[#3C3C3C] focus:bg-[#3C3C3C]"
-                            >
-                                {key === "custom" && importedThemeName 
-                                    ? importedThemeName
-                                    : label
-                                }
-                            </SelectItem>
+                    <SelectContent className="bg-[#1E1E1E] border-[#444] max-h-[400px]">
+                        {/* Custom/Imported Theme Option */}
+                        {importedThemeName && (
+                            <>
+                                <SelectItem 
+                                    value="custom" 
+                                    className="text-white hover:bg-[#3C3C3C] focus:bg-[#3C3C3C]"
+                                >
+                                    {importedThemeName}
+                                </SelectItem>
+                            </>
+                        )}
+                        
+                        {/* Grouped themes by aesthetic */}
+                        {Object.entries(themesByAesthetic).map(([aesthetic, themes]) => (
+                            <SelectGroup key={aesthetic}>
+                                <SelectLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-1.5">
+                                    {aesthetic}
+                                </SelectLabel>
+                                {themes.map((theme) => (
+                                    <SelectItem
+                                        key={theme.id}
+                                        value={theme.id}
+                                        className="text-white hover:bg-[#3C3C3C] focus:bg-[#3C3C3C] pl-6"
+                                    >
+                                        {theme.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectGroup>
                         ))}
                     </SelectContent>
                 </Select>

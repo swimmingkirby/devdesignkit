@@ -15,8 +15,53 @@ import { ColorPicker } from "@/components/ui/color-picker"
 import { CustomizerHeader } from "./customizer-header"
 import { ActionBar } from "./action-bar"
 import { LayoutDashboard, TrendingUp, BarChart3, FolderKanban, Users, Database, FileText, HelpCircle, Settings, Search, ChevronUp, Plus, Pencil, Home, ChevronRight } from "lucide-react"
-import { presetThemes, ThemeKey } from "@/lib/themes"
+import { presetThemes } from "@/lib/themes/preset-themes"
 import { ThemeTokens } from "@/lib/types/theme"
+
+// Helper to convert legacy theme tokens to new format
+function convertLegacyToNewTokens(legacy: any): ThemeTokens {
+  return {
+    colors: {
+      background: legacy.colors.background,
+      foreground: legacy.colors.foreground,
+      primary: legacy.colors.primary,
+      primaryForeground: legacy.colors.primaryForeground || "#ffffff",
+      secondary: legacy.colors.secondary || legacy.colors.muted,
+      secondaryForeground: legacy.colors.secondaryForeground || legacy.colors.foreground,
+      muted: legacy.colors.muted,
+      mutedForeground: legacy.colors.mutedForeground || legacy.colors.foreground,
+      destructive: legacy.colors.destructive || "#ef4444",
+      destructiveForeground: legacy.colors.destructiveForeground || "#ffffff",
+      border: legacy.colors.border || legacy.colors.muted,
+      input: legacy.colors.input || legacy.colors.border || legacy.colors.muted,
+      ring: legacy.colors.primary,
+      accent: legacy.colors.accent,
+      accentForeground: legacy.colors.accentForeground,
+    },
+    fonts: {
+      sans: `${legacy.typography.headingFont}, system-ui, sans-serif`,
+      serif: "Georgia, serif",
+      mono: "Menlo, Monaco, Courier, monospace",
+      sizes: {
+        body: legacy.typography.scale === "sm" ? "14px" : legacy.typography.scale === "lg" ? "18px" : "16px",
+        heading: legacy.typography.scale === "sm" ? ["36px", "28px", "20px"] : legacy.typography.scale === "lg" ? ["56px", "40px", "28px"] : ["48px", "36px", "24px"],
+        caption: "14px",
+      },
+    },
+    radius: {
+      small: `${Math.max(0, legacy.radius - 4)}px`,
+      medium: `${legacy.radius}px`,
+      large: `${legacy.radius + 4}px`,
+    },
+    spacing: {
+      base: legacy.spacing === "compact" ? "2px" : legacy.spacing === "spacious" ? "8px" : "4px",
+    },
+    shadows: {
+      base: legacy.shadows === "soft" ? "0 1px 2px 0 rgb(0 0 0 / 0.05)" : legacy.shadows === "strong" ? "4px 4px 0px 0px rgb(0 0 0 / 1)" : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+      large: legacy.shadows === "soft" ? "0 10px 15px -3px rgb(0 0 0 / 0.1)" : legacy.shadows === "strong" ? "8px 8px 0px 0px rgb(0 0 0 / 1)" : "0 20px 25px -5px rgb(0 0 0 / 0.1)",
+    },
+  }
+}
 
 const FONT_OPTIONS = [
   { value: "Inter", label: "Inter" },
@@ -31,7 +76,7 @@ const FONT_OPTIONS = [
 
 export function StyleCustomizer() {
   const { theme, updateTheme } = useTheme()
-  const [selectedTheme, setSelectedTheme] = React.useState<ThemeKey>("minimal")
+  const [selectedTheme, setSelectedTheme] = React.useState<string>("minimal-light")
   const [barHeights, setBarHeights] = React.useState<number[]>([])
   const [importedThemeName, setImportedThemeName] = React.useState<string | null>(null)
   const [showSuccessBanner, setShowSuccessBanner] = React.useState(false)
@@ -105,7 +150,7 @@ export function StyleCustomizer() {
   }
 
   // Handle theme selection from dropdown
-  const handleThemeChange = React.useCallback((themeKey: ThemeKey) => {
+  const handleThemeChange = React.useCallback((themeKey: string) => {
     console.log(`🎨 Theme selector changed to: ${themeKey}`);
     
     // If we're currently importing, ignore this change
@@ -123,10 +168,12 @@ export function StyleCustomizer() {
       return; // Don't load the preset "custom" theme
     }
     
-    const selectedThemeTokens = presetThemes[themeKey]
-    if (selectedThemeTokens) {
+    const selectedThemeData = presetThemes[themeKey]
+    if (selectedThemeData) {
       console.log(`✓ Loading preset theme: ${themeKey}`);
-      updateTheme(selectedThemeTokens)
+      // Convert the old theme structure to new ThemeTokens structure
+      const tokens = convertLegacyToNewTokens(selectedThemeData.tokens)
+      updateTheme(tokens)
     }
     
     // Clear imported theme name when switching to a non-custom preset theme
@@ -175,7 +222,8 @@ export function StyleCustomizer() {
   React.useEffect(() => {
     const initialTheme = presetThemes[selectedTheme]
     if (initialTheme) {
-      updateTheme(initialTheme)
+      const tokens = convertLegacyToNewTokens(initialTheme.tokens)
+      updateTheme(tokens)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run on mount - updateTheme is stable from context
