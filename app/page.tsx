@@ -20,7 +20,7 @@ export default function Home() {
         <div className="flex-1 space-y-8 max-w-2xl text-center lg:text-left">
 
           {/* Badge / Label */}
-          <div className="inline-flex items-center border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-sm font-medium text-blue-400 mb-4">
+          <div className="inline-flex items-center border border-purple-500/30 bg-blue-500/10 px-3 py-1 text-sm font-medium text-blue-400 mb-4">
             <Wand2 className="mr-2 h-3.5 w-3.5" />
             AI-Powered Design System
           </div>
@@ -38,7 +38,7 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
             <Link href="/wizard/product">
-              <Button size="lg" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white h-12 px-8 text-base rounded-md">
+              <Button size="lg" className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white h-12 px-8 text-base rounded-md">
                 Start Wizard
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -118,7 +118,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex gap-3">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white flex-1 rounded-md">
+                    <Button className="bg-purple-600 hover:bg-purple-700 text-white flex-1 rounded-md">
                       Sign Up
                     </Button>
                     <Button variant="secondary" className="bg-[#333] hover:bg-[#444] text-white flex-1 rounded-md">

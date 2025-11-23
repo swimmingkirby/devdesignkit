@@ -21,7 +21,7 @@ export default function WelcomePage() {
           <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-[#3C3C3C]">
             Sign In
           </Button>
-          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white border-none">
+          <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white border-none">
             Sign Up
           </Button>
         </div>
@@ -55,7 +55,7 @@ export default function WelcomePage() {
                   Define your product, choose a style, and customize your design system.
                 </p>
                 <Button
-                  className="mt-4 w-full bg-blue-600 hover:bg-blue-700"
+                  className="mt-4 w-full bg-purple-600 hover:bg-purple-700"
                   onClick={(e) => {
                     e.stopPropagation()
                     router.push("/wizard/product")

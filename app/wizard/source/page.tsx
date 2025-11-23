@@ -78,7 +78,7 @@ export default function SourcePage() {
                             onClick={() => setSelectedSource(option.id)}
                         >
                             {option.recommended && (
-                                <div className="absolute -top-3 left-4 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                                <div className="absolute -top-3 left-4 bg-purple-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
                                     Recommended
                                 </div>
                             )}
@@ -87,7 +87,7 @@ export default function SourcePage() {
                                 <div className="flex items-start gap-4">
                                     <div className={cn(
                                         "p-3 rounded-md transition-colors",
-                                        isSelected ? "bg-blue-600 text-white" : "bg-[#252525] text-gray-400"
+                                        isSelected ? "bg-purple-600 text-white" : "bg-[#252525] text-gray-400"
                                     )}>
                                         <Icon className="h-6 w-6" />
                                     </div>
@@ -137,7 +137,7 @@ export default function SourcePage() {
                 <Button
                     size="lg"
                     onClick={handleContinue}
-                    className="gap-2 min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                    className="gap-2 min-w-[140px] bg-purple-600 hover:bg-purple-700 text-white rounded-md"
                 >
                     Continue
                     <ArrowRight className="h-4 w-4" />

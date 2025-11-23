@@ -189,7 +189,7 @@ export default function UxPage() {
                     <Button
                         size="lg"
                         onClick={handleContinue}
-                        className="w-full md:w-auto min-w-[200px] bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                        className="w-full md:w-auto min-w-[200px] bg-purple-600 hover:bg-purple-700 text-white rounded-md"
                     >
                         {fromInspiration ? "Generate Theme" : "Enter Customizer"}
                     </Button>

@@ -238,7 +238,7 @@ export default function ThemePage() {
                 <Button
                     size="lg"
                     onClick={handleContinue}
-                    className="gap-2 min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                    className="gap-2 min-w-[140px] bg-purple-600 hover:bg-purple-700 text-white rounded-md"
                     disabled={!selectedThemeId}
                 >
                     Continue

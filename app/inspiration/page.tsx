@@ -94,7 +94,7 @@ export default function InspirationPage() {
           <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-[#3C3C3C]">
             Sign In
           </Button>
-          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white border-none">
+          <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white border-none">
             Sign Up
           </Button>
         </div>
@@ -188,7 +188,7 @@ export default function InspirationPage() {
           <Button
             onClick={handleContinue}
             disabled={uploadedImages.length === 0}
-            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Continue
           </Button>

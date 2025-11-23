@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Palette, Download, Loader2, CheckCircle2 } from "lucide-react"
+import { Pen, Download, Loader2, CheckCircle2 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useTheme } from "@/lib/contexts/theme-context"
 import { buildThemeZip } from "@/lib/export/buildThemeZip"
@@ -49,7 +49,11 @@ export function CustomizerHeader() {
             <header className="h-14 flex items-center justify-between px-6 border-b border-[#444] bg-[#2C2C2C] text-white shrink-0">
                 {/* Left side - Logo */}
                 <div className="flex items-center gap-2 font-semibold text-lg">
-                    <Palette className="h-5 w-5" />
+                    <div className="flex items-center text-purple-500">
+                        <span className="text-xl font-bold">[</span>
+                        <Pen className="h-5 w-5 mx-1" />
+                        <span className="text-xl font-bold">]</span>
+                    </div>
                     <span>DevDesignKit</span>
                 </div>
 
@@ -58,7 +62,7 @@ export function CustomizerHeader() {
                     {isCustomizer && (
                         <Button
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white border-none gap-2"
+                            className="bg-purple-600 hover:bg-purple-700 text-white border-none gap-2"
                             onClick={() => setIsExportDialogOpen(true)}
                         >
                             <Download className="h-4 w-4" />
@@ -96,7 +100,7 @@ export function CustomizerHeader() {
                             </div>
                         ) : (
                             <Button
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                                 onClick={handleExport}
                                 disabled={isExporting}
                             >

@@ -34,7 +34,7 @@ export default function PresetsPage() {
           <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-[#3C3C3C]">
             Sign In
           </Button>
-          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white border-none">
+          <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white border-none">
             Sign Up
           </Button>
         </div>
@@ -132,7 +132,7 @@ export default function PresetsPage() {
 
                     {/* Select Button */}
                     <Button
-                      className="w-full bg-blue-600 hover:bg-blue-700 mt-4"
+                      className="w-full bg-purple-600 hover:bg-purple-700 mt-4"
                       onClick={(e) => {
                         e.stopPropagation()
                         handlePresetSelect(themeKey)

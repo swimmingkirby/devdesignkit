@@ -93,7 +93,7 @@ export default function ProductPage() {
                                 className={cn(
                                     "cursor-pointer px-4 py-2 border transition-all hover:bg-[#252525] text-sm font-medium rounded-none",
                                     isSelected
-                                        ? "border-blue-500 bg-blue-600 text-white hover:bg-blue-700"
+                                        ? "border-purple-500 bg-purple-600 text-white hover:bg-purple-700"
                                         : "bg-[#1E1E1E] border-[#444] text-gray-400 hover:text-gray-200"
                                 )}
                             >
@@ -117,7 +117,7 @@ export default function ProductPage() {
                                 className={cn(
                                     "cursor-pointer px-4 py-3 border text-center transition-all hover:bg-[#252525] text-sm font-medium rounded-none",
                                     isSelected
-                                        ? "border-blue-500 bg-blue-600 text-white hover:bg-blue-700"
+                                        ? "border-purple-500 bg-purple-600 text-white hover:bg-purple-700"
                                         : "bg-[#1E1E1E] border-[#444] text-gray-400 hover:text-gray-200"
                                 )}
                             >
@@ -140,7 +140,7 @@ export default function ProductPage() {
                     size="lg"
                     onClick={handleContinue}
                     disabled={!isValid}
-                    className="w-full md:w-auto min-w-[200px] bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                    className="w-full md:w-auto min-w-[200px] bg-purple-600 hover:bg-purple-700 text-white rounded-md"
                 >
                     Continue
                 </Button>

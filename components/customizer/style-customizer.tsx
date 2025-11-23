@@ -1260,7 +1260,7 @@ export function StyleCustomizer() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsInspectMode(!isInspectMode)}
-                  className={`gap-2 ${isInspectMode ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:text-white hover:bg-[#3C3C3C]'}`}
+                  className={`gap-2 ${isInspectMode ? 'bg-purple-600/20 text-purple-400' : 'text-gray-400 hover:text-white hover:bg-[#3C3C3C]'}`}
                 >
                   <MousePointerClick className="h-4 w-4" />
                   Inspect

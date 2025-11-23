@@ -251,7 +251,7 @@ export default function InformationScraper() {
                       disabled={loading}
                       className="flex-1 bg-[#252525] border-[#444] text-white rounded-none focus-visible:ring-blue-500"
                     />
-                    <Button onClick={handleHybridScrape} disabled={loading || !url} className="bg-blue-600 hover:bg-blue-700 text-white rounded-md">
+                    <Button onClick={handleHybridScrape} disabled={loading || !url} className="bg-purple-600 hover:bg-purple-700 text-white rounded-md">
                       {loading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -289,7 +289,7 @@ export default function InformationScraper() {
                       disabled={loading}
                       className="flex-1 bg-[#252525] border-[#444] text-white rounded-none focus-visible:ring-blue-500"
                     />
-                    <Button onClick={handleScrape} disabled={loading || !url} className="bg-blue-600 hover:bg-blue-700 text-white rounded-md">
+                    <Button onClick={handleScrape} disabled={loading || !url} className="bg-purple-600 hover:bg-purple-700 text-white rounded-md">
                       {loading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -320,7 +320,7 @@ export default function InformationScraper() {
                       <Button
                         onClick={handleAnalyzeImage}
                         disabled={loading || !imageFile}
-                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                        className="bg-purple-600 hover:bg-purple-700 text-white rounded-md"
                       >
                         {loading ? (
                           <>
@@ -389,7 +389,7 @@ export default function InformationScraper() {
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-semibold">Analysis Results</h2>
                 <div className="flex gap-2">
-                  <Button onClick={handleEditInCustomizer} className="bg-blue-600 hover:bg-blue-700 text-white rounded-md">
+                  <Button onClick={handleEditInCustomizer} className="bg-purple-600 hover:bg-purple-700 text-white rounded-md">
                     <Palette className="mr-2 h-4 w-4" />
                     Edit in Customizer
                   </Button>
@@ -578,7 +578,7 @@ export default function InformationScraper() {
                   <Button
                     onClick={handleConfirmEdit}
                     disabled={!themeName.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                    className="bg-purple-600 hover:bg-purple-700 text-white rounded-md"
                   >
                     <Palette className="mr-2 h-4 w-4" />
                     Open in Customizer
