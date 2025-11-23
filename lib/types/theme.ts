@@ -27,10 +27,18 @@ export interface ThemeTokens {
     sans: string;
     serif: string;
     mono: string;
+    heading?: string;        // Optional distinct heading font
+    secondary?: string;      // Optional secondary font
     sizes: {
       body: string;
       heading: string[]; // Array of heading sizes [h1, h2, h3]
       caption: string;
+    };
+    weights?: {              // Optional font weights
+      normal: string;
+      medium?: string;
+      semibold?: string;
+      bold: string;
     };
   };
   radius: {

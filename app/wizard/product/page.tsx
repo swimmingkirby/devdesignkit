@@ -42,7 +42,7 @@ export default function ProductPage() {
     const router = useRouter()
 
     const handleContinue = () => {
-        router.push("/wizard/theme")
+        router.push("/wizard/source")
     }
 
     const isValid = product.type && product.audience && product.personality

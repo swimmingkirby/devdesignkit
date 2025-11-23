@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Download, AlertCircle, Upload, Link as LinkIcon, ZoomIn, Combine, Palette } from "lucide-react";
+import { Loader2, Download, AlertCircle, Upload, Link as LinkIcon, ZoomIn, Combine, Palette, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { convertScraperToTheme, validateScraperOutput } from "@/lib/utils/scraper-converter";
 
@@ -22,6 +22,8 @@ export default function InformationScraper() {
   const [results, setResults] = useState<any>(null);
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [themeName, setThemeName] = useState("");
+  const searchParams = useSearchParams();
+  const isFromWizard = searchParams.get("from") === "wizard";
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -166,13 +168,23 @@ export default function InformationScraper() {
     try {
       const theme = convertScraperToTheme(results);
       
-      // Store the theme in sessionStorage for the customizer to pick up
+      // Store the theme AND full scraper results for component/layout extraction
       sessionStorage.setItem("importedTheme", JSON.stringify(theme));
       sessionStorage.setItem("importedThemeName", themeName.trim());
       sessionStorage.setItem("importedThemeUrl", url || "imported-theme");
+      sessionStorage.setItem("scrapedData", JSON.stringify({
+        components: results.components,
+        layouts: results.layouts,
+        tokens: results.tokens,
+      }));
       
-      // Navigate to customizer
-      router.push("/customizer");
+      if (isFromWizard) {
+        // Continue wizard flow to UX settings
+        router.push("/wizard/ux");
+      } else {
+        // Direct navigation to customizer
+        router.push("/customizer");
+      }
     } catch (error) {
       console.error("Failed to convert theme:", error);
       alert("Failed to convert theme for customizer. Check console for details.");
@@ -182,8 +194,21 @@ export default function InformationScraper() {
   return (
     <div className="container mx-auto py-10 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
+        {isFromWizard && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push("/wizard/source")}
+            className="gap-2 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Wizard
+          </Button>
+        )}
         <div className="space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight">DevUX Scraper</h1>
+          <h1 className="text-4xl font-bold tracking-tight">
+            {isFromWizard ? "Import from Inspiration Website" : "DevUX Scraper"}
+          </h1>
           <p className="text-muted-foreground text-lg">
             Extract design tokens, components, and layouts from any website.
           </p>

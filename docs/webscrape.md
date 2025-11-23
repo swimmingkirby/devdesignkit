@@ -223,16 +223,35 @@ After normalisation and clustering, color roles are assigned using frequency rul
 
 ### 4.3 Font Tokens
 
-Extracted from histograms of font sizes and frequency of font families:
+Extracted from histograms of font sizes and frequency of font families.
 
-- font.sans
-- font.serif
-- font.mono
+**New: Intelligent Font Extraction**  
+The system now uses advanced font parsing and normalization:
+- Parses complex font stacks to extract actual fonts
+- Normalizes font names (handles quotes, system fonts, etc.)
+- Categorizes fonts (sans-serif, serif, monospace, display)
+- Tracks context (where fonts are used: headings, body, code, etc.)
+- Detects multiple fonts with their specific usage
+
+**Font tokens:**
+- font.sans (primary font)
+- font.serif (if used)
+- font.mono (for code)
+- font.heading (if distinct from primary)
+- font.secondary (if significantly used)
+
+**Font weights:**
+- font.weights.normal → most common normal weight
+- font.weights.medium → 500-599 range
+- font.weights.semibold → 600-699 range  
+- font.weights.bold → 700+ range
 
 **Sizes:**
 - font.bodySize → median
 - font.headingSizes → largest three
 - font.captionSize → smallest frequent
+
+See [Font Scraping Improvements](./font-scraping-improvements.md) for detailed documentation.
 
 ### 4.4 Radius Tokens
 

@@ -228,7 +228,7 @@ export default function ThemePage() {
                 <Button
                     variant="outline"
                     size="lg"
-                    onClick={() => router.push("/wizard/product")}
+                    onClick={() => router.push("/wizard/source")}
                     className="gap-2"
                 >
                     <ArrowLeft className="h-4 w-4" />

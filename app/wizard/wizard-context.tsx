@@ -9,6 +9,7 @@ type ProductState = {
 }
 
 type ThemeState = {
+    source: "inspiration" | "manual" | ""
     aesthetic: string
     themeId: string
 }
@@ -37,7 +38,7 @@ type WizardState = {
 
 const defaultState: WizardState = {
     product: { type: "", audience: "", personality: "" },
-    theme: { aesthetic: "", themeId: "" },
+    theme: { source: "", aesthetic: "", themeId: "" },
     ux: {
         smoothTransitions: false,
         buttonMicroAnimations: false,
